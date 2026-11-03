@@ -444,7 +444,7 @@ function updateLibStatus(){
 
 /* ---------- utilidades ---------- */
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function norm(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}
+function norm(s){return s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/([a-z])-\s+([a-z])/g,'$1$2')}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 function showMsg(t){const a=document.getElementById('msg');a.innerHTML=`<p class="err">${esc(t)}</p>`;setTimeout(()=>a.innerHTML='',5000)}
 
@@ -518,10 +518,11 @@ function renderFiles(){
   l.innerHTML=files.map((f,i)=>`<div class="frow"><svg style="color:var(--ac);flex-shrink:0" width="17" height="17" viewBox="0 0 17 17" fill="none" aria-hidden="true"><rect x="2" y="1" width="9" height="13" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="none"/><line x1="4.5" y1="5" x2="8.5" y2="5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="4.5" y1="8" x2="8.5" y2="8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="4.5" y1="11" x2="7" y2="11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg><span class="fn" title="${esc(f.name)}">${esc(f.name)}</span><span class="fw">${f.done?'ok':f.err?'Error':'...'}</span><div class="pb"><div class="pbar"><div class="pfill" style="width:${f.p}%"></div></div></div><button class="frm" onclick="rmFile(${i})" title="Remove">&times;</button></div>`).join('')
 }
 function checkGenBtn(){document.getElementById('btn-gen').disabled=!files.some(f=>f.done)}
-function rmFile(i){files.splice(i,1);renderFiles();checkGenBtn();netData=null;document.getElementById('results').style.display='none'}
+function rmFile(i){const f=files[i];if(f&&!f.done&&!f.err){showMsg('Wait until "'+f.name+'" finishes processing before removing it.');return}files.splice(i,1);renderFiles();checkGenBtn();netData=null;document.getElementById('results').style.display='none'}
 function clearAll(){files=[];renderFiles();checkGenBtn();netData=null;document.getElementById('results').style.display='none';document.getElementById('msg').innerHTML=''}
 
 async function processFile(file,idx){
+  const rec=files[idx];
   try{
     const ab=await file.arrayBuffer();
     const pdf=await pdfjsLib.getDocument({data:ab}).promise;
@@ -530,11 +531,11 @@ async function processFile(file,idx){
       const pg=await pdf.getPage(p);
       const ct=await pg.getTextContent();
       text+=ct.items.map(i=>i.str).join(' ')+'\n';
-      files[idx].p=Math.round(p/pdf.numPages*100);renderFiles();
+      rec.p=Math.round(p/pdf.numPages*100);renderFiles();
     }
-    files[idx].text=text;files[idx].done=true;files[idx].p=100;
+    rec.text=text;rec.done=true;rec.p=100;
     renderFiles();checkGenBtn();
-  }catch(e){files[idx].err=true;files[idx].p=0;renderFiles();showMsg('Error processing "'+file.name+'": '+e.message)}
+  }catch(e){rec.err=true;rec.p=0;renderFiles();showMsg('Error processing "'+file.name+'": '+e.message)}
 }
 function handleFiles(nf){
   const pdfs=nf.filter(f=>f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'));
@@ -564,7 +565,7 @@ function buildNetwork(groups,docs,minOcc,minCooc,scope){
 
   // matriz contagem [doc][grupo]  (ocorrências totais)
   const matrix=normDocs.map(nt=>groups.map(g=>{
-    let c=0;g._re.forEach(re=>{re.lastIndex=0;const mm=nt.match(re);if(mm)c+=mm.length;});return c;
+    const seen=new Set();g._re.forEach(re=>{re.lastIndex=0;let m;while((m=re.exec(nt))!==null){seen.add(m.index);if(m[0].length===0)re.lastIndex++;}});return seen.size;
   }));
   const occ=groups.map((g,gi)=>matrix.reduce((s,r)=>s+r[gi],0));
   const docf=groups.map((g,gi)=>matrix.reduce((s,r)=>s+(r[gi]>0?1:0),0));
@@ -579,7 +580,7 @@ function buildNetwork(groups,docs,minOcc,minCooc,scope){
     });
   }else{
     normDocs.forEach(nt=>{
-      const sents=nt.split(/[.!?\n]+/).filter(s=>s.trim().length>3);
+      const sents=nt.replace(/(\d)\.(\d)/g,'$1\u0000$2').replace(/\bet al\./g,'et al\u0000').replace(/\b(e\.g|i\.e|cf|fig|vs|no|vol|pp)\./g,'$1\u0000').split(/[.!?\n]+/).map(s=>s.replace(/\u0000/g,'.')).filter(s=>s.trim().length>3);
       sents.forEach(s=>{
         const present=[];
         for(let g=0;g<N;g++){let hit=false;groups[g]._re.forEach(re=>{re.lastIndex=0;if(re.test(s))hit=true;});if(hit)present.push(g);}
@@ -657,7 +658,7 @@ function downloadJSON(){
   if(!netData)return;
   const out={network:netData.network};
   downloadBlob(JSON.stringify(out,null,2),'vosviewer-terms-network.json','application/json');
-  toast('JSON baixado');
+  toast('JSON downloaded');
 }
 function csvCell(s){return '"'+String(s).replace(/"/g,'""')+'"'}
 function downloadMatrix(){
