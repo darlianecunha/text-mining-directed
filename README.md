@@ -14,6 +14,8 @@ The app is not tied to any topic. The term library is loaded at runtime as a **d
 - Load one with **Load library (domain pack)**. Bare terms you type then expand to their variants automatically.
 - Without a pack, terms are searched literally (still fully usable).
 - Build a pack by writing terms in area A and clicking **Save terms (.txt)**; that file can be reloaded later as a library.
+- A thesaurus in CSV (columns `term, category, variants`, variants separated by `;`) can be loaded as a library too. In that case only the variants are searched, not the label, which reproduces a coding pipeline where the label is just the name of the measure.
+- The option **Also search the label itself** decides whether the text before `=` counts as a search term. Untick it when the label is only a name (for example `Wind = wind power; wind energy`).
 - An example pack for maritime/port decarbonisation, aligned to Fadiga et al. (2024), is included: `decarbonisation-keywords-fadiga.txt`.
 
 ---
@@ -38,8 +40,11 @@ The app is not tied to any topic. The term library is loaded at runtime as a **d
 - Compound-term search (e.g. `shore power`) and wildcards (`emission*`)
 - Case-insensitive and accent-insensitive matching
 - Binary counting per document or co-occurrence per sentence
+- Overlapping variants of the same term count once (`green hydrogen` is one mention, not two)
+- Compounds broken at the end of a line (`just-in-` / `time`) and hyphen or space variants (`shore-power`, `shore power`) are matched
+- Each file shows pages and words, with a warning when a PDF has little text (scanned or image-only)
 - Coverage diagnostics: lists the terms with zero occurrences
-- Exports: VOSviewer JSON, thesaurus mapping (CSV), term × document matrix (CSV), frequencies (CSV)
+- Exports: VOSviewer JSON, thesaurus mapping (CSV), term × document matrix (CSV), frequencies (CSV), documents (CSV: pages, words, terms found)
 - Save and load term lists / libraries (.txt)
 
 ---
