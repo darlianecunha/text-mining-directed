@@ -1,6 +1,6 @@
 # PDFTerms — Controlled-vocabulary term search for VOSviewer
 
-**A subject-neutral, directed text-mining tool: you define the terms, the app counts their occurrences and co-occurrences across your PDFs and generates a JSON file ready for VOSviewer.**
+**A subject-neutral, directed text-mining tool: you define the terms, the app counts their occurrences and co-occurrences across your PDFs, shows the network in the app and generates a JSON file ready for VOSviewer.**
 
 It complements [PDFWords](../textminingprojeto1), which performs open extraction of every word. Here the logic is reversed: the vocabulary is controlled by you, which makes it well suited to evaluating reports and to systematic reviews in any field.
 
@@ -20,6 +20,23 @@ The app is not tied to any topic. The term library is loaded at runtime as a **d
 
 ---
 
+## Two ways to form clusters
+
+| | Free terms | Defined clusters (up to 6) |
+|---|---|---|
+| Logic | Inductive: clusters emerge from the data | Deductive: clusters come from your theory or framework |
+| Who forms the clusters | The app (Louvain modularity) or VOSviewer | You, one box per cluster |
+| Typical use | Exploration, bibliometric review | Testing a framework (SDGs, ESG pillars, GRI topics) |
+
+Running the same terms in both modes shows whether the theoretical groups actually appear in the texts. In Free terms mode the JSON carries no clusters by default, so VOSviewer forms its own; an option in the Export tab sends the app's clusters instead.
+
+## Two ways to see the result
+
+- **View in the app**: interactive network (node size = occurrences, line thickness = co-occurrence, colour = cluster), cluster legend, bar chart of occurrences and a high-resolution PNG download (3000 px).
+- **Export to VOSviewer**: JSON for VOSviewer Online plus the CSV files.
+
+---
+
 ## Difference from PDFWords
 
 | | PDFWords | PDFTerms |
@@ -36,7 +53,9 @@ The app is not tied to any topic. The term library is loaded at runtime as a **d
 - Upload of multiple PDFs by drag & drop (text extraction is 100% local)
 - Loadable domain packs (libraries) for any subject; bilingual variants supported (e.g. English + Portuguese)
 - Manual synonym grouping with `=` (always takes priority over the library)
-- Thematic categories with `[ ]` that become coloured clusters in VOSviewer
+- Free terms mode (clusters detected with Louvain) or Defined clusters mode (up to 6 named boxes)
+- Warnings for terms placed in more than one cluster, duplicate cluster names and empty boxes
+- In-app interactive network with PNG export, and a bar chart of occurrences
 - Compound-term search (e.g. `shore power`) and wildcards (`emission*`)
 - Case-insensitive and accent-insensitive matching
 - Binary counting per document or co-occurrence per sentence
@@ -53,10 +72,11 @@ The app is not tied to any topic. The term library is loaded at runtime as a **d
 
 1. Upload one or more PDFs
 2. (Optional) Load a domain pack for your topic with **Load library**
-3. Type your search terms in area A, one per line; check area B to confirm the synonyms
-4. Adjust the co-occurrence scope and the minimum thresholds
-5. Click **Count terms and build network**
-6. Download the JSON and open it at [app.vosviewer.com](https://app.vosviewer.com) → Open → VOSviewer JSON file
+3. Choose **Free terms** or **Defined clusters (up to 6)**
+4. Type your search terms in area A (or in the cluster boxes), one per line; check area B to confirm the synonyms
+5. Adjust the co-occurrence scope and the minimum thresholds
+6. Click **Count terms and build network**
+7. Explore the network in **View in the app**, or go to **Export to VOSviewer**, download the JSON and open it at [app.vosviewer.com](https://app.vosviewer.com) → Open → VOSviewer JSON file
 
 > Scanned PDFs (image only) require OCR before processing.
 
@@ -67,7 +87,7 @@ The app is not tied to any topic. The term library is loaded at runtime as a **d
 ```
 CO2                              # bare term, expands if the loaded pack knows it
 ballast water                    # compound term
-[Energy] hydrogen = H2; green hydrogen   # manual entry with a category
+[Energy] hydrogen = H2; green hydrogen   # category: loads into the "Energy" box in Defined clusters mode
 govern*                          # wildcard
 ```
 
@@ -79,7 +99,8 @@ govern*                          # wildcard
 |---|---|
 | HTML / CSS / JavaScript | Interface and logic |
 | PDF.js (v3.11) | Text extraction from PDFs |
-| VOSviewer | Network visualisation |
+| vis-network (v9.1) | In-app network visualisation |
+| VOSviewer | Network visualisation (export) |
 | Vercel | Hosting |
 
 ---

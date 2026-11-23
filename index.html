@@ -147,6 +147,34 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
 .mstep p{font-size:14px;color:var(--tx2);line-height:1.6}
 .mstep strong{color:var(--tx)}
 .modal-btns{display:flex;gap:9px;flex-wrap:wrap}
+.mode-box{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:1rem 1.1rem;margin-bottom:1rem}
+.mode-box .seg{max-width:520px}
+.cl-list{display:flex;flex-direction:column;gap:10px}
+.cl-card{background:var(--bg2);border:1px solid var(--bd);border-left:4px solid var(--ac);border-radius:var(--r);padding:.7rem .8rem}
+.cl-head{display:flex;align-items:center;gap:8px;margin-bottom:.5rem}
+.cl-head .dot{width:10px;height:10px;border-radius:99px;flex-shrink:0}
+.cl-head input{flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:5px 9px;font-family:var(--fn);font-size:12.5px;font-weight:500;color:var(--tx);outline:none}
+.cl-head input:focus{border-color:var(--ac)}
+.cl-card textarea{min-height:90px!important}
+.cl-warn{margin-top:.6rem;font-size:12px;color:#E0A030;line-height:1.6}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--bd);margin:1.5rem 0 1.25rem}
+.tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--tx2);font-family:var(--fn);font-size:13.5px;font-weight:500;padding:9px 14px;cursor:pointer;margin-bottom:-1px}
+.tab:hover{color:var(--tx)}
+.tab.on{color:var(--ac);border-bottom-color:var(--ac)}
+.net-box{background:#fff;border:1px solid var(--bd);border-radius:var(--rl);height:560px;position:relative;overflow:hidden}
+.net-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#475569;font-size:13px;padding:2rem;text-align:center}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:.9rem}
+.lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);background:var(--bg2);border:1px solid var(--bd);border-radius:99px;padding:3px 11px}
+.lg .dot{width:9px;height:9px;border-radius:99px}
+.lg b{color:var(--tx);font-weight:500}
+.app-note{font-size:12px;color:var(--tx3);margin-top:.6rem;line-height:1.6}
+.bars{display:flex;flex-direction:column;gap:5px;max-height:440px;overflow-y:auto;padding-right:4px}
+.bar-row{display:grid;grid-template-columns:minmax(110px,32%) 1fr 64px;gap:10px;align-items:center;font-size:12px}
+.bar-lab{color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{background:var(--bg3);border-radius:4px;height:14px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px}
+.bar-val{font-family:var(--mo);color:var(--tx2);text-align:right;font-size:11.5px}
+.sub-h{font-size:13px;font-weight:500;color:var(--tx2);margin:1.75rem 0 .8rem}
 @media(max-width:520px){.nav{display:none}.hero{padding:3rem 0 2rem}.hero-h1{font-size:1.75rem}}
 </style>
 </head>
@@ -177,10 +205,12 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
     <div class="wrap">
       <p class="hero-lbl">Directed search · Controlled vocabulary</p>
       <h1 class="hero-h1">Count your search terms<br>and build the VOSviewer network</h1>
-      <p class="hero-sub">You define the keywords; the app counts the occurrences and co-occurrences across your PDFs and generates a JSON file ready for VOSviewer Online. With grouped synonyms, compound terms, wildcards and thematic categories.</p>
+      <p class="hero-sub">You define the keywords; the app counts the occurrences and co-occurrences across your PDFs and shows the network right here or exports a JSON file ready for VOSviewer Online. Let the clusters emerge from the data, or define up to six clusters yourself.</p>
       <div class="hero-badges">
         <span class="badge hi">VOSviewer JSON</span>
         <span class="badge">Controlled vocabulary</span>
+        <span class="badge">In-app network</span>
+        <span class="badge">Free or defined clusters</span>
         <span class="badge">Synonyms + wildcards</span>
         <span class="badge">Binary count per document</span>
         <span class="badge">100% local</span>
@@ -219,12 +249,29 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
   <section class="sec" id="termos" style="border-top:1px solid var(--bd)">
     <div class="wrap">
       <p class="sec-title">2 — Search terms (controlled vocabulary)</p>
+      <div class="mode-box">
+        <span class="param-lbl">How should the clusters be formed?</span>
+        <div class="seg" id="seg-mode">
+          <button class="on" data-v="free" onclick="setMode('free')">Free terms</button>
+          <button data-v="clusters" onclick="setMode('clusters')">Defined clusters (up to 6)</button>
+        </div>
+        <p class="param-hint" id="mode-hint"></p>
+      </div>
       <div class="kw-block">
         <div class="kw-grid">
           <div class="kw-col">
             <div class="kw-col-h"><span class="kw-col-n">A</span> Your keywords</div>
-            <p class="kw-col-s">Type one term per line. Just what you want to search for.</p>
-            <textarea id="kw-input" spellcheck="false" autocorrect="off" placeholder="CO2&#10;ballast water&#10;shore power&#10;energy efficiency&#10;ESG&#10;dredging&#10;SDGs"></textarea>
+            <div id="free-input">
+              <p class="kw-col-s">Type one term per line. Just what you want to search for.</p>
+              <textarea id="kw-input" spellcheck="false" autocorrect="off" placeholder="CO2&#10;ballast water&#10;shore power&#10;energy efficiency&#10;ESG&#10;dredging&#10;SDGs"></textarea>
+              <div class="cl-warn" id="free-warn"></div>
+            </div>
+            <div id="cluster-input" style="display:none">
+              <p class="kw-col-s">Name each cluster and type its terms, one per line. Synonyms (=) and wildcards (*) work as usual.</p>
+              <div class="cl-list" id="cl-list"></div>
+              <button class="btn-mini" id="cl-add" onclick="addCluster()" style="margin-top:.7rem">+ Add cluster</button>
+              <div class="cl-warn" id="cl-warn"></div>
+            </div>
             <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tx2);cursor:pointer;margin-top:.6rem">
               <input type="checkbox" id="auto-expand" checked style="accent-color:var(--ac);width:15px;height:15px"/>
               Generate synonyms automatically from the library
@@ -255,7 +302,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
           <input type="file" id="kw-file" accept=".txt" style="display:none"/>
           <span id="kw-count" style="font-family:var(--mo);font-size:11px;color:var(--tx3);margin-left:auto"></span>
         </div>
-        <p class="param-hint" style="margin-top:.5rem">The app is subject-neutral. Load a domain pack (a .txt library for your topic) so that bare terms expand to their variants; the same .txt format works as both a term list and a library. In area A you can also group synonyms manually with <code style="font-family:var(--mo);color:var(--ac)">=</code>, set a category in <code style="font-family:var(--mo);color:var(--ac)">[ ]</code> and use a wildcard with <code style="font-family:var(--mo);color:var(--ac)">*</code>. Manual lines always take priority over the library. A thesaurus in CSV (columns Term, Category, Variants separated by semicolons) can be loaded as a library too; in that format the term is only a name and is searched only if it also appears among its variants, and the option “Also search the label itself” is switched off.</p>
+        <p class="param-hint" style="margin-top:.5rem">The app is subject-neutral. Load a domain pack (a .txt library for your topic) so that bare terms expand to their variants; the same .txt format works as both a term list and a library. In area A you can also group synonyms manually with <code style="font-family:var(--mo);color:var(--ac)">=</code> and use a wildcard with <code style="font-family:var(--mo);color:var(--ac)">*</code>. To group terms into themes, use Defined clusters mode; a saved list with <code style="font-family:var(--mo);color:var(--ac)">[Category] term</code> lines loads straight into the boxes. Manual lines always take priority over the library. A thesaurus in CSV (columns Term, Category, Variants separated by semicolons) can be loaded as a library too; in that format the term is only a name and is searched only if it also appears among its variants, and the option “Also search the label itself” is switched off.</p>
         <div id="lib-browser" style="display:none"></div>
       </div>
     </div>
@@ -313,12 +360,38 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
         <p class="sec-title">4 — Result</p>
 
         <div class="stats-grid" id="sgrid"></div>
+        <div id="notfound"></div>
 
-        <div class="net-preview">
+        <div class="tabs" role="tablist">
+          <button class="tab on" role="tab" data-t="app" onclick="setTab('app')">View in the app</button>
+          <button class="tab" role="tab" data-t="vos" onclick="setTab('vos')">Export to VOSviewer</button>
+        </div>
+
+        <div class="tab-panel" id="tab-app">
+          <div class="legend" id="legend"></div>
+          <div class="net-box" id="net-box"><div class="net-msg" id="net-msg">Building the network…</div></div>
+          <p class="app-note" id="app-note"></p>
+          <div class="actions" style="margin-top:1rem">
+            <button class="btn btn-primary" onclick="downloadPNG()">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true"><path d="M7.5 2v8M4 7.5L7.5 11 11 7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Download network (PNG)
+            </button>
+            <button class="btn btn-ghost" onclick="relayout()">Re-run layout</button>
+            <button class="btn btn-ghost" onclick="netFit()">Fit to view</button>
+          </div>
+          <p class="sub-h">Occurrences by term</p>
+          <div class="bars" id="bars"></div>
+        </div>
+
+        <div class="tab-panel" id="tab-vos" hidden>
+        <div class="net-preview" style="margin-top:0">
           <p class="net-title">Terms in the network (by occurrence)</p>
           <div class="net-items" id="net-items"></div>
-          <div id="notfound"></div>
         </div>
+        <label id="json-cl-opt" style="display:none;align-items:center;gap:7px;font-size:12px;color:var(--tx2);cursor:pointer;margin-top:1rem">
+          <input type="checkbox" id="json-app-clusters" style="accent-color:var(--ac);width:15px;height:15px"/>
+          Include the app's clusters in the JSON (leave unticked to let VOSviewer form its own clusters)
+        </label>
 
         <div class="actions" style="margin-top:1.5rem">
           <button class="btn btn-primary" onclick="downloadJSON()">
@@ -342,6 +415,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
             Documents (CSV)
           </button>
         </div>
+        </div>
       </div>
     </section>
   </div>
@@ -352,8 +426,8 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
       <p class="sec-title">How to use</p>
       <div class="flow">
         <div class="flow-step"><span class="flow-n">01</span><h3>Upload the PDFs</h3><p>Drag or select one or more PDFs. The text is extracted locally, with nothing sent to a server.</p></div>
-        <div class="flow-step"><span class="flow-n">02</span><h3>Define the terms</h3><p>List your keywords, group synonyms with "=", use "*" for variations and "[ ]" for thematic categories.</p></div>
-        <div class="flow-step"><span class="flow-n">03</span><h3>Open in VOSviewer</h3><p>Download the generated JSON and open it in VOSviewer Online. Node colours follow your categories.</p></div>
+        <div class="flow-step"><span class="flow-n">02</span><h3>Define the terms</h3><p>Choose free terms or up to six defined clusters. Group synonyms with "=" and use "*" for variations.</p></div>
+        <div class="flow-step"><span class="flow-n">03</span><h3>View or export</h3><p>Explore the network in the app and download it as PNG, or export the JSON for VOSviewer Online.</p></div>
       </div>
     </div>
   </section>
@@ -367,7 +441,9 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
         <details class="fi"><summary>How do I group synonyms?</summary><p>Use the equals sign. Example: <code>CO2 = carbon dioxide; dióxido de carbono</code>. All the variants are counted as a single term, with the label to the left of "=". By default the label itself is searched too; untick “Also search the label itself” when the label is only a name (for example <code>Wind = wind power; wind energy</code>, so that the bare word “wind” is not counted). A mention matched by two overlapping variants, such as “green hydrogen” and “hydrogen”, counts once. Separate the variants with a semicolon or comma. You can also let the app generate the synonyms automatically from the library.</p></details>
         <details class="fi"><summary>How do I use wildcards and compound terms?</summary><p>The <code>*</code> captures variations: <code>emission*</code> matches emission, emissions, emitting. Compound terms work directly: <code>shore power</code> searches for the whole phrase and also matches “shore-power”; a hyphen in a term is optional, so <code>just-in-time</code> also matches the term when it is broken at the end of a line. The search ignores case and accents and works in any alphabet.</p></details>
         <details class="fi"><summary>What is binary counting per document?</summary><p>In the "Document" scope, two terms co-occur if they appear in the same PDF, counted once per document. This prevents a long PDF that repeats a term many times from dominating the network. It is the recommended bibliometric standard. In the "Sentence" scope, co-occurrence is counted for every sentence in which the two terms appear together.</p></details>
-        <details class="fi"><summary>How do categories appear in VOSviewer?</summary><p>Each category in <code>[ ]</code> becomes a cluster in the JSON, and VOSviewer assigns a distinct colour to each cluster automatically. Terms without a category fall into a neutral group.</p></details>
+        <details class="fi"><summary>Free terms or defined clusters?</summary><p><strong>Free terms</strong> is the inductive option: you list the terms and the clusters emerge from the co-occurrence data (in the app, with the Louvain modularity algorithm; in VOSviewer, with its own clustering). <strong>Defined clusters</strong> is the deductive option: you set up to six clusters from your theory or framework (for example SDGs, ESG pillars or GRI topics) and place each term in one of them. Running the same terms in both modes shows whether your theoretical groups actually appear in the texts.</p></details>
+        <details class="fi"><summary>How do categories appear in VOSviewer?</summary><p>In Defined clusters mode each box becomes a cluster in the JSON, and VOSviewer assigns a distinct colour to each one. In Free terms mode the JSON carries no clusters by default, so VOSviewer forms its own; tick the option in the Export tab to send the app's clusters instead. Lines written as <code>[Category] term</code> in Free terms mode are ignored as categories, and are sorted into boxes when you switch to Defined clusters.</p></details>
+        <details class="fi"><summary>How does the in-app network differ from VOSviewer?</summary><p>The in-app view is for exploring and adjusting your terms quickly: node size follows occurrences, line thickness follows co-occurrence and colour follows the cluster. The layout is force-directed and may differ from the VOSviewer map, and in Free terms mode the app's clusters may not match VOSviewer's exactly. For a figure in a paper, VOSviewer remains the reference tool most reviewers know.</p></details>
         <details class="fi"><summary>Some terms were not found — what now?</summary><p>The result lists the terms with zero occurrences, for quality control. Check the spelling and accents, try a wildcard (e.g. <code>govern*</code>) or add synonyms. Scanned PDFs (image only) require OCR first; the file list shows pages and words for each PDF and flags files with very little text.</p></details>
       </div>
     </div>
@@ -404,6 +480,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -411,6 +488,92 @@ const CATCOLORS=['#7FB5FF','#5DCAA5','#F0997B','#C9A0FF','#FFD580','#FF8FB1','#6
 let files=[];
 let netData=null;
 let scope='doc';
+let mode='free';            // 'free' = clusters emerge from the data; 'clusters' = up to 6 defined by the user
+const MAXCL=6;
+let clusters=[{name:'',terms:''},{name:'',terms:''}];
+let activeCl=0;
+let network=null;
+const GREY='#94A3B8';
+
+/* ---------- modes: free terms vs defined clusters ---------- */
+function clusterName(i){const n=(clusters[i].name||'').replace(/[\[\]]/g,'').trim();return n||('Cluster '+(i+1))}
+function clusterNames(){return clusters.map((c,i)=>clusterName(i))}
+function stripCat(line){return line.replace(/^\s*\[[^\]]*\]\s*/,'')}
+function clustersToText(){
+  return clusters.map((c,i)=>c.terms.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('//')).map(l=>'['+clusterName(i)+'] '+stripCat(l)).join('\n')).filter(Boolean).join('\n');
+}
+function getRawTerms(){return mode==='clusters'?clustersToText():document.getElementById('kw-input').value}
+function getGroups(){
+  const g=parseTerms(getRawTerms());
+  if(mode==='free')g.forEach(x=>x.category='');
+  return g;
+}
+/* distribute "[Category] term" lines into cluster boxes (lines without a category go to the first box) */
+function textToClusters(raw){
+  const order=[],by={};let overflow=0;
+  raw.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('//')).forEach(l=>{
+    const m=l.match(/^\[([^\]]+)\]\s*(.*)$/);const cat=m?m[1].trim():'';const t=m?m[2].trim():l;if(!t)return;
+    if(!(cat in by)){if(order.length>=MAXCL){overflow++;return}order.push(cat);by[cat]=[]}
+    by[cat].push(t);
+  });
+  if(!order.length)return{list:null,overflow};
+  return{list:order.map(c=>({name:c,terms:by[c].join('\n')})),overflow};
+}
+function setMode(v){
+  if(v===mode)return;
+  if(v==='clusters'){
+    const empty=clusters.every(c=>!c.terms.trim());
+    const raw=document.getElementById('kw-input').value;
+    if(empty&&raw.trim()){const r=textToClusters(raw);if(r.list){clusters=r.list;if(clusters.length<2&&clusters[0].name==='')clusters.push({name:'',terms:''});if(r.overflow)showMsg(r.overflow+' line(s) from a 7th or later category were not loaded: the limit is '+MAXCL+' clusters.');}}
+  }else{
+    const ta=document.getElementById('kw-input');
+    if(!ta.value.trim())ta.value=clusters.map(c=>c.terms.trim()).filter(Boolean).join('\n');
+  }
+  mode=v;
+  document.querySelectorAll('#seg-mode button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.getElementById('free-input').style.display=v==='free'?'block':'none';
+  document.getElementById('cluster-input').style.display=v==='clusters'?'block':'none';
+  updateModeHint();renderClusters();renderKwPreview();
+  netData=null;document.getElementById('results').style.display='none';
+}
+function updateModeHint(){
+  document.getElementById('mode-hint').textContent=mode==='free'
+    ?'Inductive: list your terms and let the clusters emerge from the co-occurrence data.'
+    :'Deductive: define up to '+MAXCL+' clusters from your theory or framework and place each term in one of them.';
+}
+function renderClusters(){
+  const box=document.getElementById('cl-list');
+  box.innerHTML=clusters.map((c,i)=>`<div class="cl-card" style="border-left-color:${CATCOLORS[i]}">
+    <div class="cl-head"><span class="dot" style="background:${CATCOLORS[i]}"></span>
+      <input type="text" maxlength="60" data-i="${i}" class="cl-name" placeholder="Cluster ${i+1} name (e.g. Environmental)" value="${esc(c.name)}"/>
+      ${clusters.length>1?`<button class="frm" title="Remove cluster" onclick="removeCluster(${i})">&times;</button>`:''}
+    </div>
+    <textarea data-i="${i}" class="cl-terms" spellcheck="false" autocorrect="off" placeholder="one term per line">${esc(c.terms)}</textarea>
+  </div>`).join('');
+  box.querySelectorAll('.cl-name').forEach(el=>{el.addEventListener('input',()=>{clusters[+el.dataset.i].name=el.value;renderKwPreview()});el.addEventListener('focus',()=>activeCl=+el.dataset.i)});
+  box.querySelectorAll('.cl-terms').forEach(el=>{el.addEventListener('input',()=>{clusters[+el.dataset.i].terms=el.value;renderKwPreview()});el.addEventListener('focus',()=>activeCl=+el.dataset.i)});
+  const add=document.getElementById('cl-add');add.disabled=clusters.length>=MAXCL;add.style.display=clusters.length>=MAXCL?'none':'inline-block';
+  if(activeCl>=clusters.length)activeCl=clusters.length-1;
+}
+function addCluster(){if(clusters.length>=MAXCL)return;clusters.push({name:'',terms:''});activeCl=clusters.length-1;renderClusters();renderKwPreview();const n=document.querySelectorAll('.cl-name');n[n.length-1].focus()}
+function removeCluster(i){
+  if(clusters[i].terms.trim()&&!confirmInline(i))return;
+  clusters.splice(i,1);renderClusters();renderKwPreview();
+}
+let pendingRemove=-1;
+function confirmInline(i){if(pendingRemove===i){pendingRemove=-1;return true}pendingRemove=i;toast('Click × again to remove "'+clusterName(i)+'" and its terms');setTimeout(()=>{if(pendingRemove===i)pendingRemove=-1},3000);return false}
+function clusterWarnings(groups){
+  const w=[];
+  const names=clusterNames();const seenN={};names.forEach(n=>{const k=norm(n);seenN[k]=(seenN[k]||0)+1});
+  const dupN=[...new Set(names.filter(n=>seenN[norm(n)]>1))];
+  if(dupN.length)w.push('Two boxes share the name '+dupN.map(n=>'“'+esc(n)+'”').join(', ')+': they will be merged into one cluster.');
+  const where={};groups.forEach(g=>{const k=norm(g.label);(where[k]=where[k]||{label:g.label,cats:new Set()}).cats.add(g.category)});
+  const dup=Object.values(where).filter(x=>x.cats.size>1);
+  if(dup.length)w.push('In more than one cluster: '+dup.map(x=>'“'+esc(x.label)+'” ('+[...x.cats].map(esc).join(', ')+')').join('; ')+'. VOSviewer allows one cluster per term, so each will appear as separate nodes. Keep each term in a single box.');
+  const empty=clusters.map((c,i)=>c.terms.trim()?null:clusterName(i)).filter(Boolean);
+  if(empty.length&&groups.length)w.push('Empty: '+empty.map(n=>'“'+esc(n)+'”').join(', ')+'.');
+  return w;
+}
 
 /* =========================================================================
    TERM LIBRARY (domain pack) — loaded at runtime, not hard-coded.
@@ -525,23 +688,27 @@ function countGroup(res,nt){
 }
 
 function renderKwPreview(){
-  const groups=parseTerms(document.getElementById('kw-input').value);
-  const cats=[...new Set(groups.map(g=>g.category||'(uncategorised)'))];
-  const catColor={};cats.forEach((c,i)=>catColor[c]=CATCOLORS[i%CATCOLORS.length]);
+  const groups=getGroups();
+  const free=mode==='free';
+  const catColor={};
+  if(free){}else clusterNames().forEach((n,i)=>{if(!(n in catColor))catColor[n]=CATCOLORS[i]});
   const box=document.getElementById('kw-preview');
   const cnt=document.getElementById('kw-count');
-  cnt.textContent=groups.length?`${groups.length} term${groups.length>1?'s':''} · ${cats.length} categor${cats.length>1?'ies':'y'}`:'';
-  if(!groups.length){box.innerHTML='<div class="syn-empty">Type your keywords in area A. The synonyms generated for each one will appear here.</div>';return}
-  // uma linha por termo, na ordem em que foi digitado (mapeamento claro entrada -> sinônimos)
+  const nCats=free?0:new Set(groups.map(g=>g.category)).size;
+  cnt.textContent=groups.length?`${groups.length} term${groups.length>1?'s':''}`+(free?' · clusters from data':` · ${nCats} cluster${nCats>1?'s':''}`):'';
+  // warnings
+  const fw=document.getElementById('free-warn');
+  fw.textContent=free&&/^\s*\[[^\]]+\]/m.test(document.getElementById('kw-input').value)?'Categories in [ ] are ignored in Free terms mode. Switch to Defined clusters to use them: the lines are sorted into boxes automatically.':'';
+  document.getElementById('cl-warn').innerHTML=free?'':clusterWarnings(groups).join('<br>');
+  if(!groups.length){box.innerHTML='<div class="syn-empty">'+(free?'Type your keywords in area A.':'Type terms in the cluster boxes.')+' The synonyms generated for each one will appear here.</div>';return}
   let html='';
   groups.forEach(g=>{
-    const cat=g.category||'(uncategorised)';
-    const col=catColor[cat];
+    const col=free?GREY:(catColor[g.category]||GREY);
     const others=g.variants.filter(v=>norm(v)!==norm(g.label));const lab=g.variants.some(v=>norm(v)===norm(g.label));
     const varsHtml=others.length
       ? `<div class="syn-vars">${others.map(v=>`<span class="syn-var">${esc(v)}</span>`).join('')}</div>`
       : `<div class="syn-none">no synonyms in the library — only the literal term will be counted</div>`;
-    html+=`<div class="syn-row"><div class="syn-row-top"><span class="syn-dot" style="background:${col}"></span><span class="syn-term">${esc(g.label)}</span><span class="syn-cat">${esc(cat)}${g.fromLib?' · library':' · manual'}${lab?'':' · label not searched'}</span></div>${varsHtml}</div>`;
+    html+=`<div class="syn-row"><div class="syn-row-top"><span class="syn-dot" style="background:${col}"></span><span class="syn-term">${esc(g.label)}</span><span class="syn-cat">${free?'':esc(g.category)+' · '}${g.fromLib?'library':'manual'}${lab?'':' · label not searched'}</span></div>${varsHtml}</div>`;
   });
   box.innerHTML=html;
 }
@@ -627,19 +794,12 @@ function buildNetwork(groups,docs,minOcc,minCooc,scope){
     });
   }
 
-  // categorias -> cluster
-  const cats=[...new Set(groups.map(g=>g.category||'(uncategorised)'))];
-  const catId={};cats.forEach((c,i)=>catId[c]=i+1);
-
   // itens (filtra por ocorrência mínima); guarda mapa de id real
-  const id={};let next=1;const items=[];
+  const id={};let next=1;const items=[];const itemGroup=[];
   groups.forEach((g,gi)=>{
     if(occ[gi]<minOcc)return;
     id[gi]=next;
-    const it={id:next,label:g.label,weights:{Occurrences:occ[gi],Documents:docf[gi]}};
-    if(g.category)it.cluster=catId[g.category||'(uncategorised)'];
-    else it.cluster=catId['(uncategorised)'];
-    items.push(it);next++;
+    items.push({id:next,label:g.label,weights:{Occurrences:occ[gi],Documents:docf[gi]}});itemGroup.push(gi);next++;
   });
   const links=Object.entries(cooc).filter(([,v])=>v>=minCooc).map(([k,v])=>{
     const[a,b]=k.split('-').map(Number);
@@ -647,14 +807,74 @@ function buildNetwork(groups,docs,minOcc,minCooc,scope){
     return{source_id:id[a],target_id:id[b],strength:v};
   }).filter(Boolean);
 
+  // clusters: defined by the user (boxes) or detected in the data (Louvain)
+  const clInfo=[];            // [{name,color}] index = cluster id - 1
+  const itemCl={};            // item id -> cluster id (0 = unconnected, free mode only)
+  const groupCl=groups.map(()=>'');
+  if(mode==='clusters'){
+    const names=clusterNames();const used=[];
+    names.forEach((n,i)=>{if(groups.some((g,gi)=>id[gi]!==undefined&&g.category===n)&&!used.some(u=>u.name===n))used.push({name:n,color:CATCOLORS[i]})});
+    used.forEach(u=>clInfo.push(u));
+    items.forEach((it,k)=>{const g=groups[itemGroup[k]];const c=clInfo.findIndex(u=>u.name===g.category)+1;it.cluster=c;itemCl[it.id]=c});
+    groups.forEach((g,gi)=>groupCl[gi]=g.category||'');
+  }else{
+    const idx={};items.forEach((it,k)=>idx[it.id]=k);
+    const comm=louvain(items.length,links.map(l=>({a:idx[l.source_id],b:idx[l.target_id],w:l.strength})));
+    const deg=new Array(items.length).fill(0);links.forEach(l=>{deg[idx[l.source_id]]++;deg[idx[l.target_id]]++});
+    const size={};comm.forEach((c,k)=>{if(deg[k]>0)size[c]=(size[c]||0)+1});
+    const occOf={};comm.forEach((c,k)=>{occOf[c]=(occOf[c]||0)+items[k].weights.Occurrences});
+    const order=Object.keys(size).map(Number).sort((x,y)=>size[y]-size[x]||occOf[y]-occOf[x]);
+    const rank={};order.forEach((c,r)=>rank[c]=r+1);
+    order.forEach((c,r)=>clInfo.push({name:'Cluster '+(r+1),color:CATCOLORS[r%CATCOLORS.length]}));
+    items.forEach((it,k)=>{itemCl[it.id]=deg[k]>0?rank[comm[k]]:0});
+    items.forEach((it,k)=>{const c=itemCl[it.id];groupCl[itemGroup[k]]=c?clInfo[c-1].name:'Unconnected'});
+  }
+  const clName=c=>c?clInfo[c-1].name:'Unconnected';
+  const clColor=c=>c?clInfo[c-1].color:GREY;
+
   const notFound=groups.filter((g,gi)=>occ[gi]===0).map(g=>g.label);
-  return{network:{items,links},_meta:{groups,occ,docf,matrix,docs,notFound,catColor:cats.reduce((o,c,i)=>{o[c]=CATCOLORS[i%CATCOLORS.length];return o},{})}};
+  return{network:{items,links},_meta:{groups,occ,docf,matrix,docs,notFound,clInfo,itemCl,groupCl,clName,clColor,mode}};
+}
+
+/* Louvain modularity clustering (weighted, undirected). Returns a community index per node. */
+function louvain(n,edges){
+  let adj=Array.from({length:n},()=>new Map());
+  edges.forEach(({a,b,w})=>{if(a===b)return;adj[a].set(b,(adj[a].get(b)||0)+w);adj[b].set(a,(adj[b].get(a)||0)+w)});
+  let selfW=new Array(n).fill(0);
+  let nodeMap=[...Array(n).keys()];
+  for(let level=0;level<20;level++){
+    const N=adj.length;
+    const k=adj.map((m,i)=>{let s=2*selfW[i];m.forEach(v=>s+=v);return s});
+    const m2=k.reduce((x,y)=>x+y,0);if(m2===0)break;
+    const c=[...Array(N).keys()];const tot=k.slice();
+    let improved=false,moved=true,it=0;
+    while(moved&&it<100){moved=false;it++;
+      for(let i=0;i<N;i++){
+        const ci=c[i];const nw=new Map();
+        adj[i].forEach((w,j)=>nw.set(c[j],(nw.get(c[j])||0)+w));
+        tot[ci]-=k[i];
+        let best=ci,bestGain=(nw.get(ci)||0)-tot[ci]*k[i]/m2;
+        nw.forEach((w,cc)=>{const g=w-tot[cc]*k[i]/m2;if(g>bestGain+1e-12){bestGain=g;best=cc}});
+        tot[best]+=k[i];
+        if(best!==ci){c[i]=best;moved=true;improved=true}
+      }
+    }
+    if(!improved)break;
+    const lab=new Map();const cc=c.map(x=>{if(!lab.has(x))lab.set(x,lab.size);return lab.get(x)});
+    const M=lab.size;
+    nodeMap=nodeMap.map(x=>cc[x]);
+    const nadj=Array.from({length:M},()=>new Map());const nself=new Array(M).fill(0);
+    for(let i=0;i<N;i++){nself[cc[i]]+=selfW[i];adj[i].forEach((w,j)=>{if(cc[i]===cc[j]){if(i<j)nself[cc[i]]+=w}else nadj[cc[i]].set(cc[j],(nadj[cc[i]].get(cc[j])||0)+w)})}
+    adj=nadj;selfW=nself;
+    if(M===N)break;
+  }
+  return nodeMap;
 }
 
 function generate(){
   const done=files.filter(f=>f.done);
   if(!done.length){showMsg('Upload at least one PDF first.');return}
-  const groups=parseTerms(document.getElementById('kw-input').value);
+  const groups=getGroups();
   if(!groups.length){showMsg('Enter at least one search term.');return}
   const minOcc=parseInt(document.getElementById('p-minocc').value);
   const minCooc=parseInt(document.getElementById('p-mincooc').value);
@@ -668,24 +888,92 @@ function renderResults(nd){
   document.getElementById('sgrid').innerHTML=[
     ['Terms in network',items.length,true],
     ['Links',links.length,false],
+    ['Clusters',m.clInfo.length,false],
     ['Total occurrences',totalOcc.toLocaleString('en-GB'),false],
     ['Not found',m.notFound.length,false],
     ['PDFs',m.docs.length,false],
   ].map(([l,v,h])=>`<div class="sc"><span class="sl">${l}</span><span class="sv${h?' hi':''}">${v}</span></div>`).join('');
 
-  const gByLabel={};m.groups.forEach((g,gi)=>gByLabel[g.label]={cat:g.category||'(uncategorised)',occ:m.occ[gi]});
   const sorted=[...items].sort((a,b)=>b.weights.Occurrences-a.weights.Occurrences);
   document.getElementById('net-items').innerHTML=sorted.map(it=>{
-    const cat=gByLabel[it.label]?gByLabel[it.label].cat:'(uncategorised)';
-    const col=m.catColor[cat]||'#64748B';
+    const col=m.clColor(m.itemCl[it.id]);
     return `<span class="ni"><span class="dot" style="background:${col}"></span>${esc(it.label)} <span class="nc">${it.weights.Occurrences} · ${it.weights.Documents} doc</span></span>`;
   }).join('');
 
   const nf=document.getElementById('notfound');
-  nf.innerHTML=m.notFound.length?`<div class="notfound"><div class="nf-t">Terms with zero occurrences (${m.notFound.length})</div><div class="nf-list">${m.notFound.map(t=>`<span class="nf-i">${esc(t)}</span>`).join('')}</div></div>`:'';
+  nf.innerHTML=m.notFound.length?`<div class="notfound" style="margin-bottom:.5rem"><div class="nf-t">Terms with zero occurrences (${m.notFound.length})</div><div class="nf-list">${m.notFound.map(t=>`<span class="nf-i">${esc(t)}</span>`).join('')}</div></div>`:'';
+
+  // legend
+  const cnt={};items.forEach(it=>{const c=m.itemCl[it.id];cnt[c]=(cnt[c]||0)+1});
+  const lg=m.clInfo.map((c,i)=>`<span class="lg"><span class="dot" style="background:${c.color}"></span><b>${esc(c.name)}</b> ${cnt[i+1]||0} term${(cnt[i+1]||0)===1?'':'s'}</span>`);
+  if(cnt[0])lg.push(`<span class="lg"><span class="dot" style="background:${GREY}"></span><b>Unconnected</b> ${cnt[0]}</span>`);
+  document.getElementById('legend').innerHTML=lg.join('');
+  document.getElementById('app-note').textContent=m.mode==='free'
+    ?'Free terms: clusters detected in the data with the Louvain modularity algorithm. Node size = occurrences; line thickness = co-occurrence. Drag nodes to rearrange; hover for details. VOSviewer may group the terms slightly differently.'
+    :'Defined clusters: colours follow your boxes. Node size = occurrences; line thickness = co-occurrence. Drag nodes to rearrange; hover for details.';
+
+  // bars
+  const maxO=Math.max(1,...items.map(i=>i.weights.Occurrences));
+  document.getElementById('bars').innerHTML=sorted.map(it=>{
+    const c=m.itemCl[it.id];
+    return `<div class="bar-row" title="${esc(it.label)} · ${esc(m.clName(c))}"><span class="bar-lab">${esc(it.label)}</span><div class="bar-track"><div class="bar-fill" style="width:${(it.weights.Occurrences/maxO*100).toFixed(1)}%;background:${m.clColor(c)}"></div></div><span class="bar-val">${it.weights.Occurrences.toLocaleString('en-GB')}</span></div>`;
+  }).join('')||'<div class="syn-empty">No term reached the minimum occurrence.</div>';
+
+  // export option (free mode only)
+  document.getElementById('json-cl-opt').style.display=m.mode==='free'?'flex':'none';
 
   document.getElementById('results').style.display='block';
+  setTab('app');
+  drawNetwork();
   document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ---------- tabs ---------- */
+function setTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  document.getElementById('tab-app').hidden=t!=='app';
+  document.getElementById('tab-vos').hidden=t!=='vos';
+  if(t==='app'&&network)setTimeout(()=>network.fit({animation:false}),30);
+}
+
+/* ---------- in-app network (vis-network) ---------- */
+function shade(hex,f){const n=parseInt(hex.slice(1),16);const r=Math.round(((n>>16)&255)*f),g=Math.round(((n>>8)&255)*f),b=Math.round((n&255)*f);return'rgb('+r+','+g+','+b+')'}
+function drawNetwork(){
+  const box=document.getElementById('net-box');
+  if(network){network.destroy();network=null}
+  box.innerHTML='<div class="net-msg" id="net-msg">Building the network…</div>';
+  if(typeof vis==='undefined'){document.getElementById('net-msg').textContent='The network library could not be loaded (check your internet connection). The export to VOSviewer still works.';return}
+  const m=netData._meta,items=netData.network.items,links=netData.network.links;
+  if(!items.length){document.getElementById('net-msg').textContent='No term reached the minimum occurrence. Lower the threshold or check your terms.';return}
+  const nodes=items.map(it=>{const c=m.itemCl[it.id];const col=m.clColor(c);return{
+    id:it.id,label:it.label,value:it.weights.Occurrences,
+    title:it.label+'\nCluster: '+m.clName(c)+'\nOccurrences: '+it.weights.Occurrences+'\nDocuments: '+it.weights.Documents,
+    color:{background:col,border:shade(col,.7),highlight:{background:col,border:'#0B1120'},hover:{background:col,border:'#0B1120'}}}});
+  const edges=links.map(l=>({from:l.source_id,to:l.target_id,value:l.strength,title:'Co-occurrence: '+l.strength}));
+  box.innerHTML='';
+  network=new vis.Network(box,{nodes:new vis.DataSet(nodes),edges:new vis.DataSet(edges)},{
+    nodes:{shape:'dot',borderWidth:1.5,scaling:{min:8,max:42,label:{enabled:true,min:12,max:26,drawThreshold:6}},font:{face:'Sora, sans-serif',color:'#1F2937',strokeWidth:3,strokeColor:'#ffffff'}},
+    edges:{color:{color:'rgba(100,116,139,0.30)',highlight:'rgba(15,23,42,0.75)',hover:'rgba(15,23,42,0.55)'},scaling:{min:0.6,max:7},smooth:false,selectionWidth:1.5},
+    physics:{solver:'forceAtlas2Based',forceAtlas2Based:{gravitationalConstant:-70,centralGravity:0.012,springLength:130,springConstant:0.06,avoidOverlap:0.6},stabilization:{iterations:500,fit:true}},
+    interaction:{hover:true,tooltipDelay:120,navigationButtons:false,keyboard:false}
+  });
+  network.on('beforeDrawing',ctx=>{const c=ctx.canvas;ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,c.width,c.height);ctx.restore()});
+  network.once('stabilizationIterationsDone',()=>{network.setOptions({physics:false});network.fit({animation:false})});
+}
+function relayout(){if(!network)return;network.setOptions({physics:{enabled:true}});network.stabilize(500);network.once('stabilizationIterationsDone',()=>{network.setOptions({physics:false});network.fit({animation:false})})}
+function netFit(){if(network)network.fit({animation:{duration:300}})}
+function downloadPNG(){
+  if(!network){showMsg('Generate the network first.');return}
+  // render at high resolution (about 3000 px wide), then restore the on-screen size
+  const box=document.getElementById('net-box');const w=box.clientWidth,h=box.clientHeight;
+  const W=3000,H=Math.round(W*h/w);
+  box.style.visibility='hidden';
+  network.setSize(W+'px',H+'px');network.fit({animation:false,maxZoomLevel:20});network.redraw();
+  const cv=box.querySelector('canvas');const url=cv?cv.toDataURL('image/png'):null;
+  network.setSize('100%','100%');network.fit({animation:false});network.redraw();
+  box.style.visibility='visible';
+  if(!url)return;
+  const a=document.createElement('a');a.href=url;a.download='pdfterms-network.png';a.click();toast('PNG downloaded');
 }
 
 /* ---------- exports ---------- */
@@ -694,7 +982,13 @@ function downloadBlob(content,name,type){
 }
 function downloadJSON(){
   if(!netData)return;
-  const out={network:netData.network};
+  const m=netData._meta;
+  let items=netData.network.items;
+  if(m.mode==='free'){
+    const inc=document.getElementById('json-app-clusters').checked;
+    items=items.map(it=>{const o={id:it.id,label:it.label,weights:it.weights};if(inc)o.cluster=m.itemCl[it.id]||(m.clInfo.length+1);return o});
+  }
+  const out={network:{items,links:netData.network.links}};
   downloadBlob(JSON.stringify(out,null,2),'vosviewer-terms-network.json','application/json');
   toast('JSON downloaded');
 }
@@ -702,10 +996,10 @@ function csvCell(s){return '"'+String(s).replace(/"/g,'""')+'"'}
 function downloadMatrix(){
   if(!netData)return;
   const m=netData._meta;
-  let csv='Term,Category,'+m.docs.map(d=>csvCell(d.name)).join(',')+',Total,Documents\n';
+  let csv=(m.mode==='free'?'Term,Cluster (app),':'Term,Cluster,')+m.docs.map(d=>csvCell(d.name)).join(',')+',Total,Documents\n';
   m.groups.forEach((g,gi)=>{
     const row=m.matrix.map(r=>r[gi]);
-    csv+=csvCell(g.label)+','+csvCell(g.category||'')+','+row.join(',')+','+m.occ[gi]+','+m.docf[gi]+'\n';
+    csv+=csvCell(g.label)+','+csvCell(m.groupCl[gi]||'')+','+row.join(',')+','+m.occ[gi]+','+m.docf[gi]+'\n';
   });
   downloadBlob(csv,'term-document-matrix.csv','text/csv');
   toast('Matrix exported');
@@ -713,8 +1007,8 @@ function downloadMatrix(){
 function downloadFreq(){
   if(!netData)return;
   const m=netData._meta;
-  let csv='Term,Category,Occurrences,Documents\n';
-  m.groups.forEach((g,gi)=>{csv+=csvCell(g.label)+','+csvCell(g.category||'')+','+m.occ[gi]+','+m.docf[gi]+'\n';});
+  let csv=(m.mode==='free'?'Term,Cluster (app),':'Term,Cluster,')+'Occurrences,Documents\n';
+  m.groups.forEach((g,gi)=>{csv+=csvCell(g.label)+','+csvCell(m.groupCl[gi]||'')+','+m.occ[gi]+','+m.docf[gi]+'\n';});
   downloadBlob(csv,'term-frequencies.csv','text/csv');
   toast('Frequencies exported');
 }
@@ -727,7 +1021,7 @@ function downloadDocs(){
   toast('Documents exported');
 }
 function exportThesaurus(){
-  const groups=parseTerms(document.getElementById('kw-input').value);
+  const groups=getGroups();
   if(!groups.length){showMsg('Enter at least one term first.');return}
   let csv='Term,Category,Source,Synonyms\n';
   groups.forEach(g=>{
@@ -746,14 +1040,23 @@ function closeModalDirect(){document.getElementById('modal').style.display='none
 
 /* ---------- term list: example / save / load ---------- */
 function loadExample(){
-  document.getElementById('kw-input').value=
-`[Theme A] term one = synonym; variant*
-[Theme A] term two
-[Theme B] term three = another synonym`;
+  if(mode==='clusters'){
+    clusters=[{name:'Theme A',terms:'term one = synonym; variant*\nterm two'},{name:'Theme B',terms:'term three = another synonym'}];
+    renderClusters();
+  }else{
+    document.getElementById('kw-input').value=
+`term one = synonym; variant*
+term two
+term three = another synonym`;
+  }
   document.getElementById('auto-expand').checked=true;
   renderKwPreview();
 }
-function clearKw(){document.getElementById('kw-input').value='';renderKwPreview()}
+function clearKw(){
+  if(mode==='clusters'){clusters=[{name:'',terms:''},{name:'',terms:''}];activeCl=0;renderClusters()}
+  else document.getElementById('kw-input').value='';
+  renderKwPreview();
+}
 function toggleLib(){
   const b=document.getElementById('lib-browser');
   if(b.style.display!=='none'){b.style.display='none';return}
@@ -767,10 +1070,16 @@ function toggleLib(){
     es.forEach(e=>{html+=`<span class="kw-term" title="${esc(e.variants.join(' | '))}" style="cursor:pointer" onclick="addLibTerm('${esc(e.label).replace(/'/g,"\\'")}')">${esc(e.label)} <span>+${e.variants.filter(v=>norm(v)!==norm(e.label)).length}</span></span>`;});
     html+='</div></div>';
   });
-  html+=`<p class="param-hint">Library with ${THESAURUS.length} domain terms. Click a term to add it to your list.</p></div>`;
+  html+=`<p class="param-hint">Library with ${THESAURUS.length} domain terms. Click a term to add it to your list${mode==='clusters'?' (it goes to the cluster box you last clicked)':''}.</p></div>`;
   b.innerHTML=html;b.style.display='block';
 }
 function addLibTerm(label){
+  if(mode==='clusters'){
+    const all=clusters.flatMap(c=>c.terms.split('\n').map(l=>stripCat(l.trim())));
+    if(all.some(l=>norm(l)===norm(label))){toast('Term is already in a cluster');return}
+    const c=clusters[activeCl];c.terms=(c.terms.trim()?c.terms.replace(/\s*$/,'')+'\n':'')+label;
+    renderClusters();renderKwPreview();toast('Term added to “'+clusterName(activeCl)+'”');return;
+  }
   const ta=document.getElementById('kw-input');
   const lines=ta.value.split('\n').map(l=>l.trim());
   if(lines.some(l=>norm(l)===norm(label))){toast('Term is already in the list');return}
@@ -778,7 +1087,7 @@ function addLibTerm(label){
   renderKwPreview();toast('Term added');
 }
 function downloadKw(){
-  const v=document.getElementById('kw-input').value;
+  const v=getRawTerms();
   if(!v.trim()){showMsg('Nothing to save.');return}
   downloadBlob(v,'search-terms.txt','text/plain');toast('List saved');
 }
@@ -796,13 +1105,19 @@ document.getElementById('auto-expand').addEventListener('change',renderKwPreview
 document.getElementById('label-search').addEventListener('change',()=>{updateLibStatus();renderKwPreview()});
 document.getElementById('kw-file').addEventListener('change',function(e){
   const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();r.onload=()=>{document.getElementById('kw-input').value=r.result;renderKwPreview();toast('Term list loaded')};r.readAsText(f);this.value='';
+  const r=new FileReader();r.onload=()=>{
+    if(mode==='clusters'){const res=textToClusters(r.result);if(!res.list){showMsg('No terms found in the file.');return}
+      clusters=res.list;renderClusters();if(res.overflow)showMsg(res.overflow+' line(s) from a 7th or later category were not loaded: the limit is '+MAXCL+' clusters.');}
+    else document.getElementById('kw-input').value=r.result;
+    renderKwPreview();toast('Term list loaded')};r.readAsText(f);this.value='';
 });
 document.getElementById('lib-file').addEventListener('change',function(e){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();r.onload=()=>{setLibrary(r.result,f.name.replace(/\.(txt|csv)$/i,''));toast('Library loaded: '+THESAURUS.length+' terms')};r.readAsText(f);this.value='';
 });
 updateLibStatus();
+updateModeHint();
+renderClusters();
 renderKwPreview();
 </script>
 </body>
