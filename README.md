@@ -55,16 +55,19 @@ Running the same terms in both modes shows whether the theoretical groups actual
 - Manual synonym grouping with `=` (always takes priority over the library)
 - Free terms mode (clusters detected with Louvain) or Defined clusters mode (up to 6 named boxes)
 - Warnings for terms placed in more than one cluster, duplicate cluster names and empty boxes
-- In-app interactive network with PNG export, and a bar chart of occurrences
+- In-app interactive network (node area proportional to occurrences, strongest 100/300/1000/all links shown) with high-resolution PNG export, and a bar chart of occurrences
+- Cluster names and colours carried into the VOSviewer JSON, so VOSviewer shows the same legend as the app
 - Compound-term search (e.g. `shore power`) and wildcards (`emission*`)
 - Case-insensitive and accent-insensitive matching
-- Binary counting per document or co-occurrence per sentence
+- Binary counting per document or co-occurrence per sentence (sentences end at . ! ? or a blank line, not at PDF line breaks)
 - Overlapping variants of the same term count once (`green hydrogen` is one mention, not two)
 - Compounds broken at the end of a line (`just-in-` / `time`) and hyphen or space variants (`shore-power`, `shore power`) are matched
 - Each file shows pages and words, with a warning when a PDF has little text (scanned or image-only)
 - Coverage diagnostics: lists the terms with zero occurrences
 - Exports: VOSviewer JSON, thesaurus mapping (CSV), term × document matrix (CSV), frequencies (CSV), documents (CSV: pages, words, terms found)
 - Save and load term lists / libraries (.txt)
+- CSV files with UTF-8 marker, so accents open correctly in Excel
+- Accessibility checked against WCAG 2 AA (axe-core)
 
 ---
 

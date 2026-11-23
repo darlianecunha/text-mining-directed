@@ -3,13 +3,20 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>PDF Terms → VOSviewer</title>
+<title>PDFTerms · Directed text mining for PDF reports</title>
+<meta name="description" content="Count your own search terms across PDF reports, map their co-occurrence and export the network to VOSviewer. Free or defined clusters. Runs entirely in your browser."/>
+<meta name="author" content="Darliane Ribeiro Cunha"/>
+<meta name="theme-color" content="#0B1120"/>
+<meta property="og:title" content="PDFTerms · Directed text mining for PDF reports"/>
+<meta property="og:description" content="Count your own search terms across PDFs, map their co-occurrence and export to VOSviewer. Runs entirely in your browser."/>
+<meta property="og:type" content="website"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230B1120'/%3E%3Ccircle cx='10' cy='10' r='5.5' stroke='%237FB5FF' stroke-width='1.8' fill='none'/%3E%3Cline x1='14' y1='14' x2='19.5' y2='19.5' stroke='%237FB5FF' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0B1120;--bg2:#111827;--bg3:#1A2436;--bd:rgba(255,255,255,0.08);--bdh:rgba(255,255,255,0.18);--tx:#F0F4F8;--tx2:#94A3B8;--tx3:#64748B;--ac:#7FB5FF;--acd:rgba(127,181,255,0.12);--ach:#A9CDFF;--dg:#F0997B;--r:10px;--rl:16px;--fn:'Sora',sans-serif;--mo:'JetBrains Mono',monospace}
+:root{--bg:#0B1120;--bg2:#111827;--bg3:#1A2436;--bd:rgba(255,255,255,0.08);--bdh:rgba(255,255,255,0.18);--tx:#F0F4F8;--tx2:#94A3B8;--tx3:#8090A6;--ac:#7FB5FF;--acd:rgba(127,181,255,0.12);--ach:#A9CDFF;--dg:#F0997B;--r:10px;--rl:16px;--fn:'Sora',sans-serif;--mo:'JetBrains Mono',monospace}
 html{scroll-behavior:smooth}
 body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:15px;line-height:1.6;min-height:100vh}
 .wrap{max-width:880px;margin:0 auto;padding:0 1.5rem}
@@ -28,10 +35,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:15px;l
 .hero-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:1.5rem}
 .badge{font-family:var(--mo);font-size:11px;padding:4px 12px;border-radius:99px;border:1px solid var(--bd);color:var(--tx3)}
 .badge.hi{border-color:rgba(127,181,255,.35);color:var(--ac)}
-.sec{padding:2.5rem 0}
+.sec{padding:2.5rem 0;scroll-margin-top:64px}
 .sec-title{font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin-bottom:1.25rem}
 .drop{position:relative;border:1.5px dashed var(--bdh);border-radius:var(--rl);padding:3rem 2rem;text-align:center;cursor:pointer;transition:border-color .25s,background .25s;background:var(--bg2)}
-.drop:hover,.drop:focus-visible{border-color:var(--ac);background:var(--acd);outline:none}
+.drop:hover,.drop:focus-within{border-color:var(--ac);background:var(--acd);outline:none}
+.drop:has(input:focus-visible){outline:2px solid var(--ac);outline-offset:3px}
 .drop.over{border-color:var(--ac);background:var(--acd)}
 .drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .drop-in{pointer-events:none}
@@ -149,7 +157,21 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
 .modal-btns{display:flex;gap:9px;flex-wrap:wrap}
 .mode-box{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:1rem 1.1rem;margin-bottom:1rem}
 .mode-box .seg{max-width:520px}
-.cl-list{display:flex;flex-direction:column;gap:10px}
+.cl-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:680px){.cl-list{grid-template-columns:1fr}}
+.kw-block.clmode .kw-grid{grid-template-columns:1fr}
+.kw-block.clmode #col-b{display:none}
+.cl-syn{margin-top:.55rem;border-top:1px solid var(--bd);padding-top:.45rem}
+.cl-syn summary{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);cursor:pointer;user-select:none;list-style:none}
+.cl-syn summary::-webkit-details-marker{display:none}
+.cl-syn summary::before{content:'▸ ';color:var(--ac)}
+.cl-syn[open] summary::before{content:'▾ '}
+.cl-syn-body{display:flex;flex-direction:column;gap:6px;margin-top:.5rem;max-height:220px;overflow-y:auto}
+.cls-row{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.cls-term{font-size:12px;font-weight:600;color:var(--tx);margin-right:2px}
+.cls-arrow{color:var(--tx3);font-size:11px}
+.cls-none{font-size:11px;color:var(--tx3);font-style:italic}
+.cls-flag{font-size:10px;font-family:var(--mo);color:var(--tx3)}
 .cl-card{background:var(--bg2);border:1px solid var(--bd);border-left:4px solid var(--ac);border-radius:var(--r);padding:.7rem .8rem}
 .cl-head{display:flex;align-items:center;gap:8px;margin-bottom:.5rem}
 .cl-head .dot{width:10px;height:10px;border-radius:99px;flex-shrink:0}
@@ -175,6 +197,16 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
 .bar-fill{height:100%;border-radius:4px}
 .bar-val{font-family:var(--mo);color:var(--tx2);text-align:right;font-size:11.5px}
 .sub-h{font-size:13px;font-weight:500;color:var(--tx2);margin:1.75rem 0 .8rem}
+.step-n{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:var(--acd);color:var(--ac);font-family:var(--mo);font-size:11px;margin-right:10px;letter-spacing:0}
+.sec-title{display:flex;align-items:center}
+.hero-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:1.8rem}
+.frow .fn{min-width:0}
+.ft-links{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 18px;margin-top:.8rem}
+.ft-links a{font-size:12px;color:var(--tx2);text-decoration:none}
+.ft-links a:hover{color:var(--ac)}
+.cite{max-width:640px;margin:1rem auto 0;font-size:11.5px;color:var(--tx3);line-height:1.6}
+.cite code{font-family:var(--mo);font-size:11px;color:var(--tx2)}
+@media(max-width:520px){.pb{display:none}.frow .fw{min-width:0}}
 @media(max-width:520px){.nav{display:none}.hero{padding:3rem 0 2rem}.hero-h1{font-size:1.75rem}}
 </style>
 </head>
@@ -194,7 +226,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
     <nav class="nav">
       <a href="#termos">Terms</a>
       <a href="#params">Parameters</a>
-      <a href="#como">How to use</a>
+      <a href="#como">How it works</a>
       <a href="#faq">FAQ</a>
     </nav>
   </div>
@@ -203,26 +235,27 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
 <main>
   <section class="hero">
     <div class="wrap">
-      <p class="hero-lbl">Directed search · Controlled vocabulary</p>
-      <h1 class="hero-h1">Count your search terms<br>and build the VOSviewer network</h1>
-      <p class="hero-sub">You define the keywords; the app counts the occurrences and co-occurrences across your PDFs and shows the network right here or exports a JSON file ready for VOSviewer Online. Let the clusters emerge from the data, or define up to six clusters yourself.</p>
+      <p class="hero-lbl">Directed text mining · Controlled vocabulary</p>
+      <h1 class="hero-h1">Measure how your PDFs<br>talk about what matters</h1>
+      <p class="hero-sub">Define the terms, upload the reports and get counts, co-occurrences and a term network in seconds. Let the clusters emerge from the data or set up to six from your framework, then explore the map here or export it to VOSviewer.</p>
       <div class="hero-badges">
-        <span class="badge hi">VOSviewer JSON</span>
-        <span class="badge">Controlled vocabulary</span>
-        <span class="badge">In-app network</span>
+        <span class="badge hi">Runs in your browser</span>
+        <span class="badge">VOSviewer-ready</span>
         <span class="badge">Free or defined clusters</span>
-        <span class="badge">Synonyms + wildcards</span>
-        <span class="badge">Binary count per document</span>
-        <span class="badge">100% local</span>
+        <span class="badge">CSV exports</span>
+      </div>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#upload">Get started</a>
+        <a class="btn btn-ghost" href="#como">How it works</a>
       </div>
     </div>
   </section>
 
   <!-- UPLOAD -->
-  <section class="sec">
+  <section class="sec" id="upload">
     <div class="wrap">
-      <p class="sec-title">1 — Upload PDFs</p>
-      <div class="drop" id="drop" role="button" tabindex="0" aria-label="PDF upload area">
+      <p class="sec-title"><span class="step-n">1</span>Upload PDFs</p>
+      <div class="drop" id="drop">
         <input type="file" accept=".pdf" multiple id="finput" aria-label="Select PDFs"/>
         <div class="drop-in">
           <div class="drop-ico">
@@ -237,7 +270,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
             </svg>
           </div>
           <p class="drop-h">Drag PDFs here</p>
-          <p class="drop-s">or <span class="drop-link">click to select</span> — multiple files supported</p>
+          <p class="drop-s">or <span class="drop-link">click to select</span> · several files at once · text is read on your device</p>
         </div>
       </div>
       <div id="msg"></div>
@@ -248,26 +281,26 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
   <!-- TERMOS -->
   <section class="sec" id="termos" style="border-top:1px solid var(--bd)">
     <div class="wrap">
-      <p class="sec-title">2 — Search terms (controlled vocabulary)</p>
+      <p class="sec-title"><span class="step-n">2</span>Define the search terms</p>
       <div class="mode-box">
         <span class="param-lbl">How should the clusters be formed?</span>
         <div class="seg" id="seg-mode">
-          <button class="on" data-v="free" onclick="setMode('free')">Free terms</button>
-          <button data-v="clusters" onclick="setMode('clusters')">Defined clusters (up to 6)</button>
+          <button class="on" aria-pressed="true" data-v="free" onclick="setMode('free')">Free terms</button>
+          <button aria-pressed="false" data-v="clusters" onclick="setMode('clusters')">Defined clusters (up to 6)</button>
         </div>
         <p class="param-hint" id="mode-hint"></p>
       </div>
-      <div class="kw-block">
+      <div class="kw-block" id="kw-block">
         <div class="kw-grid">
           <div class="kw-col">
             <div class="kw-col-h"><span class="kw-col-n">A</span> Your keywords</div>
             <div id="free-input">
               <p class="kw-col-s">Type one term per line. Just what you want to search for.</p>
-              <textarea id="kw-input" spellcheck="false" autocorrect="off" placeholder="CO2&#10;ballast water&#10;shore power&#10;energy efficiency&#10;ESG&#10;dredging&#10;SDGs"></textarea>
+              <textarea id="kw-input" aria-label="Search terms, one per line" spellcheck="false" autocorrect="off" placeholder="CO2&#10;ballast water&#10;shore power&#10;energy efficiency&#10;ESG&#10;dredging&#10;SDGs"></textarea>
               <div class="cl-warn" id="free-warn"></div>
             </div>
             <div id="cluster-input" style="display:none">
-              <p class="kw-col-s">Name each cluster and type its terms, one per line. Synonyms (=) and wildcards (*) work as usual.</p>
+              <p class="kw-col-s">Name each cluster and type its terms, one per line. Synonyms (=) and wildcards (*) work as usual. Below each list you see the variants that will actually be counted.</p>
               <div class="cl-list" id="cl-list"></div>
               <button class="btn-mini" id="cl-add" onclick="addCluster()" style="margin-top:.7rem">+ Add cluster</button>
               <div class="cl-warn" id="cl-warn"></div>
@@ -281,7 +314,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
               Also search the label itself (the text before =)
             </label>
           </div>
-          <div class="kw-col">
+          <div class="kw-col" id="col-b">
             <div class="kw-col-h"><span class="kw-col-n">B</span> Synonyms generated by the app</div>
             <p class="kw-col-s">Each word with the variants that will actually be counted. This is your study's thesaurus.</p>
             <div class="syn-out" id="kw-preview"></div>
@@ -290,7 +323,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
         <div class="kw-actions">
           <button class="btn-mini" onclick="document.getElementById('lib-file').click()" style="border-color:var(--ac);color:var(--ac)">Load library (domain pack)</button>
           <input type="file" id="lib-file" accept=".txt,.csv" style="display:none"/>
-          <span id="lib-status" style="font-family:var(--mo);font-size:11px;color:var(--tx3)">No library loaded — terms searched literally</span>
+          <span id="lib-status" style="font-family:var(--mo);font-size:11px;color:var(--tx3)">No library loaded: terms are searched literally</span>
         </div>
         <div class="kw-actions">
           <button class="btn-mini" onclick="loadExample()">Load example</button>
@@ -302,7 +335,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
           <input type="file" id="kw-file" accept=".txt" style="display:none"/>
           <span id="kw-count" style="font-family:var(--mo);font-size:11px;color:var(--tx3);margin-left:auto"></span>
         </div>
-        <p class="param-hint" style="margin-top:.5rem">The app is subject-neutral. Load a domain pack (a .txt library for your topic) so that bare terms expand to their variants; the same .txt format works as both a term list and a library. In area A you can also group synonyms manually with <code style="font-family:var(--mo);color:var(--ac)">=</code> and use a wildcard with <code style="font-family:var(--mo);color:var(--ac)">*</code>. To group terms into themes, use Defined clusters mode; a saved list with <code style="font-family:var(--mo);color:var(--ac)">[Category] term</code> lines loads straight into the boxes. Manual lines always take priority over the library. A thesaurus in CSV (columns Term, Category, Variants separated by semicolons) can be loaded as a library too; in that format the term is only a name and is searched only if it also appears among its variants, and the option “Also search the label itself” is switched off.</p>
+        <p class="param-hint" style="margin-top:.6rem">Optional: load a domain pack (.txt, or a CSV thesaurus with columns Term, Category, Variants) so that bare terms expand to their variants. Lines you write yourself always take priority over the library.</p>
         <div id="lib-browser" style="display:none"></div>
       </div>
     </div>
@@ -311,28 +344,28 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
   <!-- PARAMS -->
   <section class="sec" id="params">
     <div class="wrap">
-      <p class="sec-title">3 — Network parameters</p>
+      <p class="sec-title"><span class="step-n">3</span>Set the network parameters</p>
       <div class="params-grid">
         <div class="param-card">
           <span class="param-lbl">Co-occurrence scope</span>
           <div class="seg" id="seg-scope">
-            <button class="on" data-v="doc" onclick="setScope('doc')">Document</button>
-            <button data-v="sent" onclick="setScope('sent')">Sentence</button>
+            <button class="on" aria-pressed="true" data-v="doc" onclick="setScope('doc')">Document</button>
+            <button aria-pressed="false" data-v="sent" onclick="setScope('sent')">Sentence</button>
           </div>
           <p class="param-hint" id="scope-hint">Terms co-occur if they appear in the same PDF (binary, the bibliometric standard)</p>
         </div>
         <div class="param-card">
-          <span class="param-lbl">Minimum occurrence</span>
+          <span class="param-lbl" id="lbl-minocc">Minimum occurrence</span>
           <div class="param-row">
-            <input type="range" min="1" max="20" value="1" id="p-minocc" step="1" oninput="document.getElementById('v-minocc').textContent=this.value"/>
+            <input type="range" min="1" max="20" value="1" id="p-minocc" aria-labelledby="lbl-minocc" step="1" oninput="document.getElementById('v-minocc').textContent=this.value"/>
             <span class="param-val" id="v-minocc">1</span>
           </div>
           <p class="param-hint">Minimum for a term to enter the network</p>
         </div>
         <div class="param-card">
-          <span class="param-lbl">Minimum co-occurrence</span>
+          <span class="param-lbl" id="lbl-mincooc">Minimum co-occurrence</span>
           <div class="param-row">
-            <input type="range" min="1" max="15" value="1" id="p-mincooc" step="1" oninput="document.getElementById('v-mincooc').textContent=this.value"/>
+            <input type="range" min="1" max="15" value="1" id="p-mincooc" aria-labelledby="lbl-mincooc" step="1" oninput="document.getElementById('v-mincooc').textContent=this.value"/>
             <span class="param-val" id="v-mincooc">1</span>
           </div>
           <p class="param-hint">Minimum link strength between two terms</p>
@@ -357,19 +390,26 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
     <div class="divider"></div>
     <section class="sec">
       <div class="wrap">
-        <p class="sec-title">4 — Result</p>
+        <p class="sec-title"><span class="step-n">4</span>Results</p>
 
         <div class="stats-grid" id="sgrid"></div>
         <div id="notfound"></div>
 
         <div class="tabs" role="tablist">
-          <button class="tab on" role="tab" data-t="app" onclick="setTab('app')">View in the app</button>
-          <button class="tab" role="tab" data-t="vos" onclick="setTab('vos')">Export to VOSviewer</button>
+          <button class="tab on" role="tab" id="tabbtn-app" aria-selected="true" aria-controls="tab-app" data-t="app" onclick="setTab('app')">View in the app</button>
+          <button class="tab" role="tab" id="tabbtn-vos" aria-selected="false" aria-controls="tab-vos" data-t="vos" onclick="setTab('vos')">Export to VOSviewer</button>
         </div>
 
-        <div class="tab-panel" id="tab-app">
-          <div class="legend" id="legend"></div>
-          <div class="net-box" id="net-box"><div class="net-msg" id="net-msg">Building the network…</div></div>
+        <div class="tab-panel" id="tab-app" role="tabpanel" aria-labelledby="tabbtn-app">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:.4rem">
+            <div class="legend" id="legend" style="margin-bottom:0"></div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2)">Links shown
+              <select id="link-limit" onchange="drawNetwork()" style="background:var(--bg3);color:var(--tx);border:1px solid var(--bd);border-radius:7px;padding:4px 8px;font-family:var(--fn);font-size:12px">
+                <option value="100">strongest 100</option><option value="300" selected>strongest 300</option><option value="1000">strongest 1000</option><option value="0">all</option>
+              </select></label>
+          </div>
+          <p class="app-note" id="link-note" style="margin:0 0 .6rem"></p>
+          <div class="net-box" id="net-box" role="img" aria-label="Co-occurrence network of the search terms. The bar chart below lists the same terms as text."><div class="net-msg" id="net-msg">Building the network…</div></div>
           <p class="app-note" id="app-note"></p>
           <div class="actions" style="margin-top:1rem">
             <button class="btn btn-primary" onclick="downloadPNG()">
@@ -383,7 +423,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
           <div class="bars" id="bars"></div>
         </div>
 
-        <div class="tab-panel" id="tab-vos" hidden>
+        <div class="tab-panel" id="tab-vos" role="tabpanel" aria-labelledby="tabbtn-vos" hidden>
         <div class="net-preview" style="margin-top:0">
           <p class="net-title">Terms in the network (by occurrence)</p>
           <div class="net-items" id="net-items"></div>
@@ -423,7 +463,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
   <!-- HOW -->
   <section class="sec" id="como" style="border-top:1px solid var(--bd)">
     <div class="wrap">
-      <p class="sec-title">How to use</p>
+      <p class="sec-title">How it works</p>
       <div class="flow">
         <div class="flow-step"><span class="flow-n">01</span><h3>Upload the PDFs</h3><p>Drag or select one or more PDFs. The text is extracted locally, with nothing sent to a server.</p></div>
         <div class="flow-step"><span class="flow-n">02</span><h3>Define the terms</h3><p>Choose free terms or up to six defined clusters. Group synonyms with "=" and use "*" for variations.</p></div>
@@ -437,14 +477,10 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
     <div class="wrap">
       <p class="sec-title">Frequently asked questions</p>
       <div class="faq-list">
-        <details class="fi"><summary>How does this differ from PDFWords?</summary><p>PDFWords extracts every word from the PDFs automatically (an open, exploratory approach). PDFTerms does the opposite: you control the vocabulary, listing exactly the terms of interest. This is the directed approach, well suited to systematic reviews and to testing predefined concepts.</p></details>
-        <details class="fi"><summary>How do I group synonyms?</summary><p>Use the equals sign. Example: <code>CO2 = carbon dioxide; dióxido de carbono</code>. All the variants are counted as a single term, with the label to the left of "=". By default the label itself is searched too; untick “Also search the label itself” when the label is only a name (for example <code>Wind = wind power; wind energy</code>, so that the bare word “wind” is not counted). A mention matched by two overlapping variants, such as “green hydrogen” and “hydrogen”, counts once. Separate the variants with a semicolon or comma. You can also let the app generate the synonyms automatically from the library.</p></details>
-        <details class="fi"><summary>How do I use wildcards and compound terms?</summary><p>The <code>*</code> captures variations: <code>emission*</code> matches emission, emissions, emitting. Compound terms work directly: <code>shore power</code> searches for the whole phrase and also matches “shore-power”; a hyphen in a term is optional, so <code>just-in-time</code> also matches the term when it is broken at the end of a line. The search ignores case and accents and works in any alphabet.</p></details>
-        <details class="fi"><summary>What is binary counting per document?</summary><p>In the "Document" scope, two terms co-occur if they appear in the same PDF, counted once per document. This prevents a long PDF that repeats a term many times from dominating the network. It is the recommended bibliometric standard. In the "Sentence" scope, co-occurrence is counted for every sentence in which the two terms appear together.</p></details>
-        <details class="fi"><summary>Free terms or defined clusters?</summary><p><strong>Free terms</strong> is the inductive option: you list the terms and the clusters emerge from the co-occurrence data (in the app, with the Louvain modularity algorithm; in VOSviewer, with its own clustering). <strong>Defined clusters</strong> is the deductive option: you set up to six clusters from your theory or framework (for example SDGs, ESG pillars or GRI topics) and place each term in one of them. Running the same terms in both modes shows whether your theoretical groups actually appear in the texts.</p></details>
-        <details class="fi"><summary>How do categories appear in VOSviewer?</summary><p>In Defined clusters mode each box becomes a cluster in the JSON, and VOSviewer assigns a distinct colour to each one. In Free terms mode the JSON carries no clusters by default, so VOSviewer forms its own; tick the option in the Export tab to send the app's clusters instead. Lines written as <code>[Category] term</code> in Free terms mode are ignored as categories, and are sorted into boxes when you switch to Defined clusters.</p></details>
-        <details class="fi"><summary>How does the in-app network differ from VOSviewer?</summary><p>The in-app view is for exploring and adjusting your terms quickly: node size follows occurrences, line thickness follows co-occurrence and colour follows the cluster. The layout is force-directed and may differ from the VOSviewer map, and in Free terms mode the app's clusters may not match VOSviewer's exactly. For a figure in a paper, VOSviewer remains the reference tool most reviewers know.</p></details>
-        <details class="fi"><summary>Some terms were not found — what now?</summary><p>The result lists the terms with zero occurrences, for quality control. Check the spelling and accents, try a wildcard (e.g. <code>govern*</code>) or add synonyms. Scanned PDFs (image only) require OCR first; the file list shows pages and words for each PDF and flags files with very little text.</p></details>
+        <details class="fi"><summary>Free terms or defined clusters?</summary><p><strong>Free terms</strong> is inductive: the clusters emerge from the co-occurrence data (Louvain modularity in the app; VOSviewer forms its own when you export). <strong>Defined clusters</strong> is deductive: you set up to six clusters from your theory or framework, such as SDGs, ESG pillars or GRI topics, and their names and colours are carried into the VOSviewer file. Running the same terms in both modes shows whether your theoretical groups actually appear in the texts.</p></details>
+        <details class="fi"><summary>How do I write the terms?</summary><p>One term per line. Group synonyms with <code>=</code> and separate variants with <code>;</code>, for example <code>CO2 = carbon dioxide; dióxido de carbono</code>. Use <code>*</code> for endings: <code>emission*</code> matches emission and emissions, but not emitting. Compound terms are searched as whole phrases, hyphens are optional, and case and accents are ignored. Untick “Also search the label itself” when the text before <code>=</code> is only a name.</p></details>
+        <details class="fi"><summary>Document or sentence co-occurrence?</summary><p><strong>Document</strong> (recommended) links two terms once per PDF in which both appear, so a long report that repeats a term cannot dominate the network. <strong>Sentence</strong> counts every sentence in which the two terms appear together; it suits close readings of a few documents.</p></details>
+        <details class="fi"><summary>Some terms were not found. What now?</summary><p>The results list every term with zero occurrences. Check spelling, add synonyms or try a wildcard such as <code>govern*</code>. Scanned PDFs contain images, not text, and need OCR first; the file list flags documents with very little text.</p></details>
       </div>
     </div>
   </section>
@@ -453,8 +489,14 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
 <footer>
   <div class="wrap">
     <span class="logo-tx">PDF<span class="ac">Terms</span></span>
-    <p>Developed by <strong style="color:var(--tx2)">Darliane Ribeiro Cunha</strong></p>
-    <p>100% local processing &middot; No data is stored &middot; VOSviewer JSON compatible</p>
+    <p>Developed by <strong style="color:var(--tx2)">Darliane Ribeiro Cunha, PhD</strong></p>
+    <div class="ft-links">
+      <a href="https://ribeirocunha.com" target="_blank" rel="noopener">ribeirocunha.com</a>
+      <a href="https://orcid.org/0000-0003-2548-1237" target="_blank" rel="noopener">ORCID</a>
+      <a href="https://github.com/darlianecunha/text-mining-directed" target="_blank" rel="noopener">Source code</a>
+    </div>
+    <p class="cite">How to cite: <code>Cunha, D. R. (2026). PDFTerms: directed text mining of PDF reports for VOSviewer [Software]. https://textmining2.vercel.app</code></p>
+    <p>All processing happens in your browser. No file or term is stored or sent to a server.</p>
   </div>
 </footer>
 
@@ -522,17 +564,17 @@ function textToClusters(raw){
 function setMode(v){
   if(v===mode)return;
   if(v==='clusters'){
-    const empty=clusters.every(c=>!c.terms.trim());
     const raw=document.getElementById('kw-input').value;
-    if(empty&&raw.trim()){const r=textToClusters(raw);if(r.list){clusters=r.list;if(clusters.length<2&&clusters[0].name==='')clusters.push({name:'',terms:''});if(r.overflow)showMsg(r.overflow+' line(s) from a 7th or later category were not loaded: the limit is '+MAXCL+' clusters.');}}
+    if(raw.trim()){const r=textToClusters(raw);if(r.list){clusters=r.list;if(clusters.length<2&&clusters[0].name==='')clusters.push({name:'',terms:''});if(r.overflow)showMsg(r.overflow+' line(s) from a 7th or later category were not loaded: the limit is '+MAXCL+' clusters.');}}
   }else{
-    const ta=document.getElementById('kw-input');
-    if(!ta.value.trim())ta.value=clusters.map(c=>c.terms.trim()).filter(Boolean).join('\n');
+    // keep the [Cluster] tags so that switching back restores the boxes
+    if(clusters.some(c=>c.terms.trim()))document.getElementById('kw-input').value=clustersToText();
   }
   mode=v;
-  document.querySelectorAll('#seg-mode button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.querySelectorAll('#seg-mode button').forEach(b=>{b.classList.toggle('on',b.dataset.v===v);b.setAttribute('aria-pressed',b.dataset.v===v?'true':'false')});
   document.getElementById('free-input').style.display=v==='free'?'block':'none';
   document.getElementById('cluster-input').style.display=v==='clusters'?'block':'none';
+  document.getElementById('kw-block').classList.toggle('clmode',v==='clusters');
   updateModeHint();renderClusters();renderKwPreview();
   netData=null;document.getElementById('results').style.display='none';
 }
@@ -545,10 +587,11 @@ function renderClusters(){
   const box=document.getElementById('cl-list');
   box.innerHTML=clusters.map((c,i)=>`<div class="cl-card" style="border-left-color:${CATCOLORS[i]}">
     <div class="cl-head"><span class="dot" style="background:${CATCOLORS[i]}"></span>
-      <input type="text" maxlength="60" data-i="${i}" class="cl-name" placeholder="Cluster ${i+1} name (e.g. Environmental)" value="${esc(c.name)}"/>
-      ${clusters.length>1?`<button class="frm" title="Remove cluster" onclick="removeCluster(${i})">&times;</button>`:''}
+      <input type="text" maxlength="60" data-i="${i}" aria-label="Name of cluster ${i+1}" class="cl-name" placeholder="Cluster ${i+1} name (e.g. Environmental)" value="${esc(c.name)}"/>
+      ${clusters.length>1?`<button class="frm" aria-label="Remove cluster ${i+1}" title="Remove cluster" onclick="removeCluster(${i})">&times;</button>`:''}
     </div>
-    <textarea data-i="${i}" class="cl-terms" spellcheck="false" autocorrect="off" placeholder="one term per line">${esc(c.terms)}</textarea>
+    <textarea data-i="${i}" aria-label="Terms of cluster ${i+1}" class="cl-terms" spellcheck="false" autocorrect="off" placeholder="one term per line">${esc(c.terms)}</textarea>
+    <details class="cl-syn" open><summary id="cl-syn-s-${i}">Synonyms</summary><div class="cl-syn-body" id="cl-syn-${i}"></div></details>
   </div>`).join('');
   box.querySelectorAll('.cl-name').forEach(el=>{el.addEventListener('input',()=>{clusters[+el.dataset.i].name=el.value;renderKwPreview()});el.addEventListener('focus',()=>activeCl=+el.dataset.i)});
   box.querySelectorAll('.cl-terms').forEach(el=>{el.addEventListener('input',()=>{clusters[+el.dataset.i].terms=el.value;renderKwPreview()});el.addEventListener('focus',()=>activeCl=+el.dataset.i)});
@@ -627,7 +670,7 @@ function labelSearched(){const e=document.getElementById('label-search');return 
 function setLibrary(text,name){const csv=isThesaurusCSV(text);THESAURUS=csv?parseLibraryCSV(text):parseLibraryText(text);if(csv){const e=document.getElementById('label-search');if(e)e.checked=false}buildLib();LIB_NAME=name||'';updateLibStatus();renderKwPreview();}
 function updateLibStatus(){
   const el=document.getElementById('lib-status');if(!el)return;
-  el.textContent=THESAURUS.length?('Library: '+(LIB_NAME?LIB_NAME+' · ':'')+THESAURUS.length+' terms · labels '+(labelSearched()?'searched':'not searched')):'No library loaded — terms searched literally';
+  el.textContent=THESAURUS.length?('Library: '+(LIB_NAME?LIB_NAME+' · ':'')+THESAURUS.length+' terms · labels '+(labelSearched()?'searched':'not searched')):'No library loaded: terms are searched literally';
   el.style.color=THESAURUS.length?'var(--ac)':'var(--tx3)';
 }
 
@@ -697,9 +740,12 @@ function renderKwPreview(){
   const nCats=free?0:new Set(groups.map(g=>g.category)).size;
   cnt.textContent=groups.length?`${groups.length} term${groups.length>1?'s':''}`+(free?' · clusters from data':` · ${nCats} cluster${nCats>1?'s':''}`):'';
   // warnings
+  const commaLabels=getRawTerms().split('\n').map(l=>stripCat(l.trim())).filter(l=>l.indexOf('=')>0&&l.slice(l.indexOf('=')+1).includes(',')).map(l=>l.slice(0,l.indexOf('=')).trim());
+  const commaWarn=commaLabels.length?'Commas split synonyms: check '+commaLabels.map(l=>'“'+esc(l)+'”').join(', ')+'. Use ; between variants if a variant itself contains a comma.':'';
   const fw=document.getElementById('free-warn');
-  fw.textContent=free&&/^\s*\[[^\]]+\]/m.test(document.getElementById('kw-input').value)?'Categories in [ ] are ignored in Free terms mode. Switch to Defined clusters to use them: the lines are sorted into boxes automatically.':'';
-  document.getElementById('cl-warn').innerHTML=free?'':clusterWarnings(groups).join('<br>');
+  fw.innerHTML=[free&&/^\s*\[[^\]]+\]/m.test(document.getElementById('kw-input').value)?'Categories in [ ] are ignored in Free terms mode. Switch to Defined clusters to use them: the lines are sorted into boxes automatically.':'',free?commaWarn:''].filter(Boolean).join('<br>');
+  document.getElementById('cl-warn').innerHTML=free?'':clusterWarnings(groups).concat(commaWarn?[commaWarn]:[]).join('<br>');
+  if(!free)renderClusterSynonyms();
   if(!groups.length){box.innerHTML='<div class="syn-empty">'+(free?'Type your keywords in area A.':'Type terms in the cluster boxes.')+' The synonyms generated for each one will appear here.</div>';return}
   let html='';
   groups.forEach(g=>{
@@ -707,10 +753,26 @@ function renderKwPreview(){
     const others=g.variants.filter(v=>norm(v)!==norm(g.label));const lab=g.variants.some(v=>norm(v)===norm(g.label));
     const varsHtml=others.length
       ? `<div class="syn-vars">${others.map(v=>`<span class="syn-var">${esc(v)}</span>`).join('')}</div>`
-      : `<div class="syn-none">no synonyms in the library — only the literal term will be counted</div>`;
+      : `<div class="syn-none">No synonyms in the library: only the literal term is counted</div>`;
     html+=`<div class="syn-row"><div class="syn-row-top"><span class="syn-dot" style="background:${col}"></span><span class="syn-term">${esc(g.label)}</span><span class="syn-cat">${free?'':esc(g.category)+' · '}${g.fromLib?'library':'manual'}${lab?'':' · label not searched'}</span></div>${varsHtml}</div>`;
   });
   box.innerHTML=html;
+}
+
+/* synonyms shown inside each cluster box (Defined clusters mode) */
+function renderClusterSynonyms(){
+  clusters.forEach((c,i)=>{
+    const body=document.getElementById('cl-syn-'+i),sum=document.getElementById('cl-syn-s-'+i);if(!body)return;
+    const lines=c.terms.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('//')).map(stripCat).join('\n');
+    const gs=parseTerms(lines);
+    const nVar=gs.reduce((n,g)=>n+g.variants.filter(v=>norm(v)!==norm(g.label)).length,0);
+    sum.textContent=gs.length?`Synonyms (${nVar} variant${nVar===1?'':'s'} for ${gs.length} term${gs.length===1?'':'s'})`:'Synonyms';
+    if(!gs.length){body.innerHTML='<span class="cls-none">Type terms above to see what will be counted.</span>';return}
+    body.innerHTML=gs.map(g=>{
+      const others=g.variants.filter(v=>norm(v)!==norm(g.label));const lab=g.variants.some(v=>norm(v)===norm(g.label));
+      return `<div class="cls-row"><span class="cls-term">${esc(g.label)}</span>${others.length?'<span class="cls-arrow">→</span>'+others.map(v=>`<span class="syn-var">${esc(v)}</span>`).join(''):'<span class="cls-none">literal term only</span>'}${g.fromLib?'<span class="cls-flag">· library</span>':''}${lab?'':'<span class="cls-flag">· label not searched</span>'}</div>`;
+    }).join('');
+  });
 }
 
 /* ---------- PDFs ---------- */
@@ -758,7 +820,7 @@ function handleFiles(nf){
 /* ---------- escopo ---------- */
 function setScope(v){
   scope=v;
-  document.querySelectorAll('#seg-scope button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.querySelectorAll('#seg-scope button').forEach(b=>{b.classList.toggle('on',b.dataset.v===v);b.setAttribute('aria-pressed',b.dataset.v===v?'true':'false')});
   document.getElementById('scope-hint').textContent = v==='doc'
     ? 'Terms co-occur if they appear in the same PDF (binary, the bibliometric standard)'
     : 'Terms co-occur for every sentence in which they appear together';
@@ -784,13 +846,21 @@ function buildNetwork(groups,docs,minOcc,minCooc,scope){
       for(let i=0;i<present.length;i++)for(let j=i+1;j<present.length;j++)addPair(present[i],present[j]);
     });
   }else{
+    // Sentences end at . ! ? or at a blank line (paragraph or page break). A single line break is NOT
+    // a sentence end: PDF text breaks lines in the middle of sentences.
     normDocs.forEach(nt=>{
-      const sents=nt.replace(/(\d)\.(\d)/g,'$1\u0000$2').replace(/\bet al\./g,'et al\u0000').replace(/\b(e\.g|i\.e|cf|fig|vs|no|vol|pp)\./g,'$1\u0000').split(/[.!?\n]+/).map(s=>s.replace(/\u0000/g,'.')).filter(s=>s.trim().length>3);
-      sents.forEach(s=>{
-        const present=[];
-        for(let g=0;g<N;g++){let hit=false;groups[g]._re.forEach(re=>{re.lastIndex=0;if(re.test(s))hit=true;});if(hit)present.push(g);}
-        for(let i=0;i<present.length;i++)for(let j=i+1;j<present.length;j++)addPair(present[i],present[j]);
-      });
+      const prot=nt.replace(/(\d)\.(\d)/g,'$1\u0000$2')                  // decimals 3.5
+        .replace(/\b(e)\.(g)\./g,'$1\u0000$2\u0000').replace(/\b(i)\.(e)\./g,'$1\u0000$2\u0000')
+        .replace(/\bet al\./g,'et al\u0000')
+        .replace(/\b(cf|fig|figs|vs|no|nos|vol|pp|p|eq|ref|approx|ca|etc|dr|prof)\./g,'$1\u0000');
+      const bounds=[];const reB=/[.!?]+|\n[ \t]*\n/g;let mb;
+      while((mb=reB.exec(prot))!==null)bounds.push(mb.index);
+      const sentOf=pos=>{let lo=0,hi=bounds.length;while(lo<hi){const mid=(lo+hi)>>1;if(bounds[mid]<pos)lo=mid+1;else hi=mid}return lo};
+      const bySent=new Map();
+      groups.forEach((g,gi)=>g._re.forEach(re=>{re.lastIndex=0;let m;
+        while((m=re.exec(nt))!==null){const k=sentOf(m.index);let set=bySent.get(k);if(!set){set=new Set();bySent.set(k,set)}set.add(gi);if(m[0].length===0)re.lastIndex++}}));
+      bySent.forEach(set=>{const present=[...set].sort((x,y)=>x-y);
+        for(let i=0;i<present.length;i++)for(let j=i+1;j<present.length;j++)addPair(present[i],present[j]);});
     });
   }
 
@@ -878,8 +948,13 @@ function generate(){
   if(!groups.length){showMsg('Enter at least one search term.');return}
   const minOcc=parseInt(document.getElementById('p-minocc').value);
   const minCooc=parseInt(document.getElementById('p-mincooc').value);
-  netData=buildNetwork(groups,done,minOcc,minCooc,scope);
-  renderResults(netData);
+  const btn=document.getElementById('btn-gen');const label=btn.innerHTML;
+  btn.disabled=true;btn.innerHTML='Counting… (large sets of PDFs can take a few seconds)';
+  setTimeout(()=>{   // let the browser paint the message before the heavy work
+    try{netData=buildNetwork(groups,done,minOcc,minCooc,scope);renderResults(netData)}
+    catch(e){showMsg('Error while counting: '+e.message)}
+    finally{btn.innerHTML=label;checkGenBtn()}
+  },40);
 }
 
 function renderResults(nd){
@@ -930,13 +1005,15 @@ function renderResults(nd){
 
 /* ---------- tabs ---------- */
 function setTab(t){
-  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  document.querySelectorAll('.tab').forEach(b=>{b.classList.toggle('on',b.dataset.t===t);b.setAttribute('aria-selected',b.dataset.t===t?'true':'false')});
   document.getElementById('tab-app').hidden=t!=='app';
   document.getElementById('tab-vos').hidden=t!=='vos';
   if(t==='app'&&network)setTimeout(()=>network.fit({animation:false}),30);
 }
 
 /* ---------- in-app network (vis-network) ---------- */
+// node area proportional to occurrences, measured from zero (not from the smallest value)
+function propScale(min,max,total,value){return max>0?Math.sqrt(value/max):1}
 function shade(hex,f){const n=parseInt(hex.slice(1),16);const r=Math.round(((n>>16)&255)*f),g=Math.round(((n>>8)&255)*f),b=Math.round((n&255)*f);return'rgb('+r+','+g+','+b+')'}
 function drawNetwork(){
   const box=document.getElementById('net-box');
@@ -949,11 +1026,15 @@ function drawNetwork(){
     id:it.id,label:it.label,value:it.weights.Occurrences,
     title:it.label+'\nCluster: '+m.clName(c)+'\nOccurrences: '+it.weights.Occurrences+'\nDocuments: '+it.weights.Documents,
     color:{background:col,border:shade(col,.7),highlight:{background:col,border:'#0B1120'},hover:{background:col,border:'#0B1120'}}}});
-  const edges=links.map(l=>({from:l.source_id,to:l.target_id,value:l.strength,title:'Co-occurrence: '+l.strength}));
+  const lim=parseInt(document.getElementById('link-limit').value)||0;
+  const shown=lim&&links.length>lim?[...links].sort((x,y)=>y.strength-x.strength).slice(0,lim):links;
+  document.getElementById('link-note').textContent=shown.length<links.length
+    ?`Showing the ${shown.length.toLocaleString('en-GB')} strongest of ${links.length.toLocaleString('en-GB')} links, for readability (as VOSviewer does). Clusters and exports use all links.`:'';
+  const edges=shown.map(l=>({from:l.source_id,to:l.target_id,value:l.strength,title:'Co-occurrence: '+l.strength}));
   box.innerHTML='';
   network=new vis.Network(box,{nodes:new vis.DataSet(nodes),edges:new vis.DataSet(edges)},{
-    nodes:{shape:'dot',borderWidth:1.5,scaling:{min:8,max:42,label:{enabled:true,min:12,max:26,drawThreshold:6}},font:{face:'Sora, sans-serif',color:'#1F2937',strokeWidth:3,strokeColor:'#ffffff'}},
-    edges:{color:{color:'rgba(100,116,139,0.30)',highlight:'rgba(15,23,42,0.75)',hover:'rgba(15,23,42,0.55)'},scaling:{min:0.6,max:7},smooth:false,selectionWidth:1.5},
+    nodes:{shape:'dot',borderWidth:1.5,scaling:{min:4,max:42,customScalingFunction:propScale,label:{enabled:true,min:11,max:26,drawThreshold:6}},font:{face:'Sora, sans-serif',color:'#1F2937',strokeWidth:3,strokeColor:'#ffffff'}},
+    edges:{color:{color:'rgba(100,116,139,0.30)',highlight:'rgba(15,23,42,0.75)',hover:'rgba(15,23,42,0.55)'},scaling:{min:0.4,max:7,customScalingFunction:(mn,mx,t,v)=>mx>0?v/mx:1},smooth:false,selectionWidth:1.5},
     physics:{solver:'forceAtlas2Based',forceAtlas2Based:{gravitationalConstant:-70,centralGravity:0.012,springLength:130,springConstant:0.06,avoidOverlap:0.6},stabilization:{iterations:500,fit:true}},
     interaction:{hover:true,tooltipDelay:120,navigationButtons:false,keyboard:false}
   });
@@ -983,12 +1064,18 @@ function downloadBlob(content,name,type){
 function downloadJSON(){
   if(!netData)return;
   const m=netData._meta;
-  let items=netData.network.items;
-  if(m.mode==='free'){
-    const inc=document.getElementById('json-app-clusters').checked;
-    items=items.map(it=>{const o={id:it.id,label:it.label,weights:it.weights};if(inc)o.cluster=m.itemCl[it.id]||(m.clInfo.length+1);return o});
-  }
+  const inc=m.mode==='clusters'||document.getElementById('json-app-clusters').checked;
+  const k=m.clInfo.length;
+  const items=netData.network.items.map(it=>{const o={id:it.id,label:it.label,weights:it.weights};if(inc)o.cluster=m.itemCl[it.id]||k+1;return o});
   const out={network:{items,links:netData.network.links}};
+  if(inc){
+    // cluster names and the app's colours, so VOSviewer shows the same legend as the app
+    const cl=m.clInfo.map((c,i)=>({cluster:i+1,label:c.name}));
+    const cols=m.clInfo.map((c,i)=>({cluster:i+1,color:c.color}));
+    if(items.some(i=>i.cluster===k+1)){cl.push({cluster:k+1,label:'Unconnected'});cols.push({cluster:k+1,color:GREY})}
+    out.network.clusters=cl;
+    out.config={color_schemes:{cluster_colors:cols}};
+  }
   downloadBlob(JSON.stringify(out,null,2),'vosviewer-terms-network.json','application/json');
   toast('JSON downloaded');
 }
@@ -996,20 +1083,20 @@ function csvCell(s){return '"'+String(s).replace(/"/g,'""')+'"'}
 function downloadMatrix(){
   if(!netData)return;
   const m=netData._meta;
-  let csv=(m.mode==='free'?'Term,Cluster (app),':'Term,Cluster,')+m.docs.map(d=>csvCell(d.name)).join(',')+',Total,Documents\n';
+  let csv='\uFEFF'+(m.mode==='free'?'Term,Cluster (app),':'Term,Cluster,')+m.docs.map(d=>csvCell(d.name)).join(',')+',Total,Documents\n';
   m.groups.forEach((g,gi)=>{
     const row=m.matrix.map(r=>r[gi]);
     csv+=csvCell(g.label)+','+csvCell(m.groupCl[gi]||'')+','+row.join(',')+','+m.occ[gi]+','+m.docf[gi]+'\n';
   });
-  downloadBlob(csv,'term-document-matrix.csv','text/csv');
+  downloadBlob(csv,'term-document-matrix.csv','text/csv;charset=utf-8');
   toast('Matrix exported');
 }
 function downloadFreq(){
   if(!netData)return;
   const m=netData._meta;
-  let csv=(m.mode==='free'?'Term,Cluster (app),':'Term,Cluster,')+'Occurrences,Documents\n';
+  let csv='\uFEFF'+(m.mode==='free'?'Term,Cluster (app),':'Term,Cluster,')+'Occurrences,Documents\n';
   m.groups.forEach((g,gi)=>{csv+=csvCell(g.label)+','+csvCell(m.groupCl[gi]||'')+','+m.occ[gi]+','+m.docf[gi]+'\n';});
-  downloadBlob(csv,'term-frequencies.csv','text/csv');
+  downloadBlob(csv,'term-frequencies.csv','text/csv;charset=utf-8');
   toast('Frequencies exported');
 }
 function downloadDocs(){
@@ -1023,12 +1110,12 @@ function downloadDocs(){
 function exportThesaurus(){
   const groups=getGroups();
   if(!groups.length){showMsg('Enter at least one term first.');return}
-  let csv='Term,Category,Source,Synonyms\n';
+  let csv='\uFEFFTerm,Category,Source,Synonyms\n';
   groups.forEach(g=>{
     const others=g.variants.filter(v=>norm(v)!==norm(g.label));
     csv+=csvCell(g.label)+','+csvCell(g.category||'')+','+csvCell(g.fromLib?'library':'manual')+','+csvCell(others.join('; '))+'\n';
   });
-  downloadBlob(csv,'thesaurus.csv','text/csv');
+  downloadBlob(csv,'thesaurus.csv','text/csv;charset=utf-8');
   toast('Thesaurus exported');
 }
 function openVOS(){
@@ -1067,7 +1154,7 @@ function toggleLib(){
   cats.forEach(cat=>{
     const es=THESAURUS.filter(e=>e.category===cat);
     html+=`<div class="kw-cat"><div class="kw-cat-h"><span class="dot" style="background:${catColor[cat]}"></span>${esc(cat)} <span style="color:var(--tx3);font-weight:400">(${es.length})</span></div><div class="kw-terms">`;
-    es.forEach(e=>{html+=`<span class="kw-term" title="${esc(e.variants.join(' | '))}" style="cursor:pointer" onclick="addLibTerm('${esc(e.label).replace(/'/g,"\\'")}')">${esc(e.label)} <span>+${e.variants.filter(v=>norm(v)!==norm(e.label)).length}</span></span>`;});
+    es.forEach(e=>{html+=`<span class="kw-term" role="button" tabindex="0" title="${esc(e.variants.join(' | '))}" style="cursor:pointer" onclick="addLibTerm(THESAURUS[${THESAURUS.indexOf(e)}].label)" onkeydown="if(event.key==='Enter'){addLibTerm(THESAURUS[${THESAURUS.indexOf(e)}].label)}">${esc(e.label)} <span>+${e.variants.filter(v=>norm(v)!==norm(e.label)).length}</span></span>`;});
     html+='</div></div>';
   });
   html+=`<p class="param-hint">Library with ${THESAURUS.length} domain terms. Click a term to add it to your list${mode==='clusters'?' (it goes to the cluster box you last clicked)':''}.</p></div>`;
@@ -1098,7 +1185,6 @@ const dz=document.getElementById('drop');
 dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
 dz.addEventListener('dragleave',e=>{if(!dz.contains(e.relatedTarget))dz.classList.remove('over')});
 dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');handleFiles(Array.from(e.dataTransfer.files))});
-dz.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();document.getElementById('finput').click()}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModalDirect()});
 document.getElementById('kw-input').addEventListener('input',renderKwPreview);
 document.getElementById('auto-expand').addEventListener('change',renderKwPreview);
