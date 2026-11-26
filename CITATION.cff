@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "TextMapReady Terms: directed text mining of PDF reports for VOSviewer"
+abstract: "Browser-based tool (formerly PDFTerms) that counts a user-defined controlled vocabulary across PDF reports, maps term co-occurrence and exports the network to VOSviewer. Files are processed locally and never uploaded."
+authors:
+  - family-names: "Cunha"
+    given-names: "Darliane Ribeiro"
+    orcid: "https://orcid.org/0000-0003-2548-1237"
+    affiliation: "Federal University of Maranhão (UFMA)"
+repository-code: "https://github.com/darlianecunha/text-mining-directed"
+url: "https://textmining2.vercel.app"
+keywords:
+  - text mining
+  - bibliometrics
+  - VOSviewer
+  - co-occurrence network
+  - content analysis

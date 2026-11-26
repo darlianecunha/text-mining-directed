@@ -1,8 +1,10 @@
-# PDFTerms — Controlled-vocabulary term search for VOSviewer
+# TextMapReady Terms: controlled-vocabulary term search for VOSviewer
+
+*Formerly PDFTerms.* Live app: https://textmining2.vercel.app
 
 **A subject-neutral, directed text-mining tool: you define the terms, the app counts their occurrences and co-occurrences across your PDFs, shows the network in the app and generates a JSON file ready for VOSviewer.**
 
-It complements [PDFWords](../textminingprojeto1), which performs open extraction of every word. Here the logic is reversed: the vocabulary is controlled by you, which makes it well suited to evaluating reports and to systematic reviews in any field.
+It complements [TextMapReady Words](https://text-umber-delta.vercel.app), which performs open extraction of every word. Here the logic is reversed: the vocabulary is controlled by you, which makes it well suited to evaluating reports and to systematic reviews in any field.
 
 ---
 
@@ -37,9 +39,9 @@ Running the same terms in both modes shows whether the theoretical groups actual
 
 ---
 
-## Difference from PDFWords
+## Difference from TextMapReady Words
 
-| | PDFWords | PDFTerms |
+| | TextMapReady Words | TextMapReady Terms |
 |---|---|---|
 | Approach | Open, data-driven | Directed, theory-driven |
 | Who chooses the terms | The algorithm | You |
@@ -113,6 +115,10 @@ govern*                          # wildcard
 All processing happens in the browser. No file is sent to any server.
 
 ---
+
+## How to cite
+
+> Cunha, D. R. (2026). TextMapReady Terms: directed text mining of PDF reports for VOSviewer [Software]. https://textmining2.vercel.app
 
 ## Author
 
