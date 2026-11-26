@@ -10,6 +10,9 @@ authors:
     affiliation: "Federal University of Maranhão (UFMA)"
 repository-code: "https://github.com/darlianecunha/text-mining-directed"
 url: "https://textmining2.vercel.app"
+doi: "10.5281/zenodo.24557534"
+version: "v0.2.0"
+license: CC-BY-4.0
 keywords:
   - text mining
   - bibliometrics

@@ -1,5 +1,7 @@
 # TextMapReady Terms: controlled-vocabulary term search for VOSviewer
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24557534.svg)](https://doi.org/10.5281/zenodo.24557534)
+
 *Formerly PDFTerms.* Live app: https://textmining2.vercel.app
 
 **A subject-neutral, directed text-mining tool: you define the terms, the app counts their occurrences and co-occurrences across your PDFs, shows the network in the app and generates a JSON file ready for VOSviewer.**
@@ -118,7 +120,7 @@ All processing happens in the browser. No file is sent to any server.
 
 ## How to cite
 
-> Cunha, D. R. (2026). TextMapReady Terms: directed text mining of PDF reports for VOSviewer [Software]. https://textmining2.vercel.app
+> Cunha, D. R. (2026). TextMapReady Terms: directed text mining of PDF reports for VOSviewer [Software]. Zenodo. https://doi.org/10.5281/zenodo.24557534
 
 ## Author
 
