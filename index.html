@@ -382,14 +382,15 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
 
       <div class="actions">
         <button class="btn btn-primary" id="btn-gen" onclick="generate()" disabled>
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4.2" stroke="currentColor" stroke-width="1.3"/><line x1="9.6" y1="9.6" x2="13" y2="13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-          Count terms and build network
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true"><path d="M4.5 2.8v9.4L12 7.5z" fill="currentColor"/></svg>
+          Generate results
         </button>
         <button class="btn btn-ghost" id="btn-clear" onclick="clearAll()">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 4h10M5 4V2h4v2M4.5 4l.5 8h4l.5-8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Clear PDFs
         </button>
       </div>
+      <p class="param-hint" style="margin-top:.6rem">Counts every term in every PDF and builds the network. The results appear below.</p>
     </div>
   </section>
 
@@ -988,7 +989,7 @@ function generate(){
   const minOcc=parseInt(document.getElementById('p-minocc').value);
   const minCooc=parseInt(document.getElementById('p-mincooc').value);
   const btn=document.getElementById('btn-gen');const label=btn.innerHTML;
-  btn.disabled=true;btn.innerHTML='Counting… (large sets of PDFs can take a few seconds)';
+  btn.disabled=true;btn.innerHTML='Generating results… (large sets of PDFs can take a few seconds)';
   setTimeout(()=>{   // let the browser paint the message before the heavy work
     try{netData=buildNetwork(groups,done,minOcc,minCooc,scope);renderResults(netData)}
     catch(e){showMsg('Error while counting: '+e.message)}
