@@ -1053,6 +1053,52 @@ function setTab(t){
   if(t==='app'&&network)setTimeout(()=>network.fit({animation:false}),30);
 }
 
+
+/* ---------- VOSviewer-style layout (VOS mapping with association strength) ---------- */
+function rng32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function vosLayout(items,links,seed){
+  const n=items.length,idx={};items.forEach((it,i)=>idx[it.id]=i);
+  const tot=new Float64Array(n);let m=0;
+  links.forEach(l=>{const a=idx[l.source_id],b=idx[l.target_id];if(a==null||b==null)return;tot[a]+=l.strength;tot[b]+=l.strength;m+=l.strength});
+  const conn=[],iso=[];for(let i=0;i<n;i++)(tot[i]>0?conn:iso).push(i);
+  const k=conn.length,pos={};
+  if(k){
+    const ci={};conn.forEach((g,j)=>ci[g]=j);
+    const S=Array.from({length:k},()=>new Float64Array(k));let sm=0,sc=0;
+    links.forEach(l=>{const a=ci[idx[l.source_id]],b=ci[idx[l.target_id]];if(a==null||b==null)return;
+      const v=2*m*l.strength/(tot[conn[a]]*tot[conn[b]]);S[a][b]+=v;S[b][a]+=v;sm+=v;sc++});
+    const eps=sc?1e-3*sm/sc:1e-3;
+    for(let a=0;a<k;a++)for(let b=0;b<k;b++)if(a!==b&&S[a][b]===0)S[a][b]=eps;
+    const V=X=>{let v=0;for(let a=0;a<k;a++)for(let b=a+1;b<k;b++){const dx=X[2*a]-X[2*b],dy=X[2*a+1]-X[2*b+1],d2=dx*dx+dy*dy;v+=S[a][b]*d2-Math.sqrt(d2)}return v};
+    let best=null,bestV=Infinity;const rnd=rng32(seed||1);
+    for(let run=0;run<12;run++){
+      let X=new Float64Array(2*k);for(let i=0;i<2*k;i++)X[i]=rnd()*2-1;
+      let step=0.5,cur=V(X);
+      for(let it=0;it<1500&&step>1e-7;it++){
+        const G=new Float64Array(2*k);
+        for(let a=0;a<k;a++)for(let b=a+1;b<k;b++){const dx=X[2*a]-X[2*b],dy=X[2*a+1]-X[2*b+1],d=Math.sqrt(dx*dx+dy*dy)||1e-9;
+          const f=2*S[a][b]-1/d;G[2*a]+=f*dx;G[2*a+1]+=f*dy;G[2*b]-=f*dx;G[2*b+1]-=f*dy}
+        let gn=0;for(let i=0;i<2*k;i++)gn+=G[i]*G[i];gn=Math.sqrt(gn)||1;
+        const Y=new Float64Array(2*k);for(let i=0;i<2*k;i++)Y[i]=X[i]-step*G[i]/gn;
+        const nv=V(Y);if(nv<cur){X=Y;cur=nv;step*=1.2}else step*=0.5;
+      }
+      if(cur<bestV){bestV=cur;best=X}
+    }
+    // centre, rotate so the main axis is horizontal, scale to unit radius
+    let mx=0,my=0;for(let a=0;a<k;a++){mx+=best[2*a];my+=best[2*a+1]}mx/=k;my/=k;
+    let sxx=0,syy=0,sxy=0;for(let a=0;a<k;a++){const x=best[2*a]-mx,y=best[2*a+1]-my;sxx+=x*x;syy+=y*y;sxy+=x*y}
+    const th=0.5*Math.atan2(2*sxy,sxx-syy),c=Math.cos(-th),s=Math.sin(-th);let R=1e-9;
+    const P=[];for(let a=0;a<k;a++){const x=best[2*a]-mx,y=best[2*a+1]-my;const u=c*x-s*y,v=s*x+c*y;P.push([u,v]);R=Math.max(R,Math.hypot(u,v))}
+    P.forEach((q,a)=>{pos[items[conn[a]].id]=[q[0]/R,q[1]/R]});
+  }
+  // measures without links: a column on the right-hand side
+  if(iso.length){
+    const xs=Object.values(pos).map(q=>q[0]);const x0=(xs.length?Math.max(...xs):0)+0.3;
+    iso.forEach((g,j)=>{pos[items[g].id]=[x0,iso.length>1?-0.7+1.4*j/(iso.length-1):0]});
+  }
+  return pos;
+}
+
 /* ---------- in-app network (vis-network) ---------- */
 // node area proportional to occurrences, measured from zero (not from the smallest value)
 function propScale(min,max,total,value){return max>0?Math.sqrt(value/max):1}
@@ -1064,8 +1110,10 @@ function drawNetwork(){
   if(typeof vis==='undefined'){document.getElementById('net-msg').textContent='The network library could not be loaded (check your internet connection). The export to VOSviewer still works.';return}
   const m=netData._meta,items=netData.network.items,links=netData.network.links;
   if(!items.length){document.getElementById('net-msg').textContent='No term reached the minimum occurrence. Lower the threshold or check your terms.';return}
-  const nodes=items.map(it=>{const c=m.itemCl[it.id];const col=m.clColor(c);return{
-    id:it.id,label:it.label,value:it.weights.Occurrences,
+  if(!netData._pos)netData._pos=vosLayout(items,links,netData._seed||1);
+  const P=netData._pos,SC=420;
+  const nodes=items.map(it=>{const c=m.itemCl[it.id];const col=m.clColor(c);const q=P[it.id]||[0,0];return{
+    id:it.id,label:it.label,value:it.weights.Occurrences,x:q[0]*SC,y:q[1]*SC,
     title:it.label+'\nCluster: '+m.clName(c)+'\nOccurrences: '+it.weights.Occurrences+'\nDocuments: '+it.weights.Documents,
     color:{background:col,border:shade(col,.7),highlight:{background:col,border:'#0B1120'},hover:{background:col,border:'#0B1120'}}}});
   const lim=parseInt(document.getElementById('link-limit').value)||0;
@@ -1076,32 +1124,88 @@ function drawNetwork(){
   box.innerHTML='';
   network=new vis.Network(box,{nodes:new vis.DataSet(nodes),edges:new vis.DataSet(edges)},{
     nodes:{shape:'dot',borderWidth:1.5,scaling:{min:4,max:42,customScalingFunction:propScale,label:{enabled:true,min:11,max:26,drawThreshold:6}},font:{face:'Sora, sans-serif',color:'#1F2937',strokeWidth:3,strokeColor:'#ffffff'}},
-    edges:{color:{color:'rgba(100,116,139,0.30)',highlight:'rgba(15,23,42,0.75)',hover:'rgba(15,23,42,0.55)'},scaling:{min:0.4,max:7,customScalingFunction:(mn,mx,t,v)=>mx>0?v/mx:1},smooth:false,selectionWidth:1.5},
-    physics:{solver:'forceAtlas2Based',forceAtlas2Based:{gravitationalConstant:-70,centralGravity:0.012,springLength:130,springConstant:0.06,avoidOverlap:0.6},stabilization:{iterations:500,fit:true}},
+    edges:{color:{color:'rgba(100,116,139,0.22)',highlight:'rgba(15,23,42,0.75)',hover:'rgba(15,23,42,0.55)'},scaling:{min:0.4,max:7,customScalingFunction:(mn,mx,t,v)=>mx>0?v/mx:1},smooth:false,selectionWidth:1.5},
+    physics:{enabled:false},
     interaction:{hover:true,tooltipDelay:120,navigationButtons:false,keyboard:false}
   });
   network.on('beforeDrawing',ctx=>{const c=ctx.canvas;ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,c.width,c.height);ctx.restore()});
-  network.once('stabilizationIterationsDone',()=>{network.setOptions({physics:false});network.fit({animation:false})});
+  setTimeout(()=>network&&network.fit({animation:false}),30);
 }
-function relayout(){if(!network)return;network.setOptions({physics:{enabled:true}});network.stabilize(500);network.once('stabilizationIterationsDone',()=>{network.setOptions({physics:false});network.fit({animation:false})})}
+function relayout(){if(!network||!netData)return;netData._seed=(netData._seed||1)+1;netData._pos=null;drawNetwork()}
 function netFit(){if(network)network.fit({animation:{duration:300}})}
 function downloadPNG(){
-  if(!network){showMsg('Generate the network first.');return}
-  // render at high resolution (about 3000 px wide), then restore the on-screen size
-  // the network lives in the "View in the app" tab: show it for a moment if another tab is open,
-  // otherwise its canvas has no size and the image comes out empty
-  const panel=document.getElementById('tab-app');const wasHidden=panel.hidden;if(wasHidden)panel.hidden=false;
-  const box=document.getElementById('net-box');const w=box.clientWidth||1200,h=box.clientHeight||800;
-  const W=3000,H=Math.round(W*h/w);
-  box.style.visibility='hidden';
-  network.setSize(W+'px',H+'px');network.fit({animation:false,maxZoomLevel:20});network.redraw();
-  const cv=box.querySelector('canvas');const url=cv?cv.toDataURL('image/png'):null;
-  network.setSize('100%','100%');network.fit({animation:false});network.redraw();
-  box.style.visibility='visible';
-  if(wasHidden)panel.hidden=true;
+  if(!network||!netData){showMsg('Generate the network first.');return}
+  const url=renderVOSPNG();
   if(!url||url.length<100){showMsg('Could not create the network image. Open "View in the app" and try again.');return}
   if(ZIP_COLLECT){ZIP_COLLECT.file('pdfterms-network.png',url.split(',')[1],{base64:true});return}
   const a=document.createElement('a');a.href=url;a.download='pdfterms-network.png';a.click();toast('PNG downloaded');
+}
+// high-resolution image in the style of VOSviewer: curved lines in the colour of the term,
+// circles sized by occurrences and labels centred on the circles, with collisions avoided
+function renderVOSPNG(){
+  const m=netData._meta,items=netData.network.items,links=netData.network.links;
+  const P=network.getPositions(items.map(i=>i.id));
+  const W=3000,FONT='Arial, Helvetica, sans-serif';
+  const maxO=Math.max(1,...items.map(i=>i.weights.Occurrences));
+  const rel=it=>Math.sqrt(it.weights.Occurrences/maxO);
+  const rad=it=>14+50*rel(it), fsz=it=>Math.round(26+22*rel(it));
+  const ids=items.map(i=>i.id);let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  ids.forEach(id=>{const q=P[id];x0=Math.min(x0,q.x);x1=Math.max(x1,q.x);y0=Math.min(y0,q.y);y1=Math.max(y1,q.y)});
+  const legH=120,pad=230,scale=(W-2*pad)/Math.max(1,x1-x0);const H=Math.round((y1-y0)*scale+2*pad+legH);
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  g.fillStyle='#ffffff';g.fillRect(0,0,W,H);
+  // move overlapping circles apart (leaves room for the centred labels)
+  const Q={};ids.forEach(id=>Q[id]={x:pad+(P[id].x-x0)*scale,y:pad+(P[id].y-y0)*scale});
+  const byR={};items.forEach(i=>byR[i.id]=rad(i));
+  for(let it=0;it<400;it++){let moved=false;
+    for(let a=0;a<ids.length;a++)for(let b=a+1;b<ids.length;b++){const A=Q[ids[a]],B=Q[ids[b]];let dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy)||0.01;
+      const need=byR[ids[a]]+byR[ids[b]]+80;if(d<need){const f=(need-d)/2/d;A.x-=dx*f;A.y-=dy*f;B.x+=dx*f;B.y+=dy*f;moved=true}}
+    if(!moved)break}
+  let qx0=Infinity,qx1=-Infinity,qy0=Infinity,qy1=-Infinity;ids.forEach(id=>{const q=Q[id];qx0=Math.min(qx0,q.x);qx1=Math.max(qx1,q.x);qy0=Math.min(qy0,q.y);qy1=Math.max(qy1,q.y)});
+  const k2=(W-2*pad)/Math.max(1,qx1-qx0);ids.forEach(id=>{Q[id].x=pad+(Q[id].x-qx0)*k2;Q[id].y=pad+(Q[id].y-qy0)*k2});
+  const H2=Math.round((qy1-qy0)*k2+2*pad+legH);cv.height=H2;g.fillStyle='#ffffff';g.fillRect(0,0,W,H2);
+  const X=id=>Q[id].x,Y=id=>Q[id].y;
+  const Hh=cv.height;
+  const byId={};items.forEach(i=>byId[i.id]=i);
+  const col=id=>m.clColor(m.itemCl[id]);
+  const rgba=(hex,a)=>{const n=parseInt(hex.slice(1),16);return`rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`};
+  // lines
+  const maxS=Math.max(1,...links.map(l=>l.strength));
+  [...links].sort((a,b)=>a.strength-b.strength).forEach(l=>{
+    const a=l.source_id,b=l.target_id;if(!P[a]||!P[b])return;
+    const ax=X(a),ay=Y(a),bx=X(b),by=Y(b),mx=(ax+bx)/2,my=(ay+by)/2,dx=bx-ax,dy=by-ay;
+    const cx=mx-dy*0.12,cy=my+dx*0.12;
+    const src=byId[a].weights.Occurrences>=byId[b].weights.Occurrences?a:b;
+    g.strokeStyle=rgba(col(src),0.18+0.32*l.strength/maxS);g.lineWidth=1.2+8*l.strength/maxS;g.lineCap='round';
+    g.beginPath();g.moveTo(ax,ay);g.quadraticCurveTo(cx,cy,bx,by);g.stroke();
+  });
+  // circles
+  const order=[...items].sort((a,b)=>a.weights.Occurrences-b.weights.Occurrences);
+  order.forEach(it=>{const r=rad(it);g.beginPath();g.arc(X(it.id),Y(it.id),r,0,2*Math.PI);g.fillStyle=col(it.id);g.fill();
+    g.lineWidth=2;g.strokeStyle=shade(col(it.id),.78);g.stroke()});
+  // labels: largest terms first; try centre, then below, above, right, left
+  const boxes=[];const hit=b=>boxes.some(o=>b.x0<o.x1&&b.x1>o.x0&&b.y0<o.y1&&b.y1>o.y0)||b.x0<4||b.x1>W-4||b.y0<4||b.y1>Hh-legH;
+  [...items].sort((a,b)=>b.weights.Occurrences-a.weights.Occurrences).forEach(it=>{
+    let f=fsz(it);const r=rad(it),cx=X(it.id),cy=Y(it.id);let placed=null;
+    for(let shrink=0;shrink<3&&!placed;shrink++){
+      g.font=`${f}px ${FONT}`;const w=g.measureText(it.label).width,h=f*1.1;
+      const cand=[[cx,cy],[cx,cy+r+h*0.6],[cx,cy-r-h*0.6],[cx+r+w/2+6,cy],[cx-r-w/2-6,cy]];
+      for(const [px,py] of cand){const b={x0:px-w/2-4,x1:px+w/2+4,y0:py-h/2,y1:py+h/2};if(!hit(b)){placed={px,py,b,f};break}}
+      if(!placed)f=Math.round(f*0.85);
+    }
+    if(!placed){g.font=`${f}px ${FONT}`;const w=g.measureText(it.label).width,h=f*1.1;placed={px:cx,py:cy+r+h*0.6,b:{x0:cx-w/2,x1:cx+w/2,y0:cy+r,y1:cy+r+h},f}}
+    boxes.push(placed.b);
+    g.font=`${placed.f}px ${FONT}`;g.textAlign='center';g.textBaseline='middle';
+    g.lineJoin='round';g.lineWidth=Math.max(4,placed.f*0.18);g.strokeStyle='rgba(255,255,255,0.85)';g.strokeText(it.label,placed.px,placed.py);
+    g.fillStyle='#111827';g.fillText(it.label,placed.px,placed.py);
+  });
+  // legend
+  const used=[...new Set(items.map(i=>m.itemCl[i.id]))].sort((a,b)=>a-b);
+  g.font=`40px ${FONT}`;g.textAlign='left';g.textBaseline='middle';
+  const ents=used.map(c=>({c,t:m.clName(c)}));const tw=ents.reduce((s,e)=>s+64+g.measureText(e.t).width+70,0)-70;
+  let lx=(W-tw)/2;const ly=Hh-legH/2;
+  ents.forEach(e=>{g.beginPath();g.arc(lx+20,ly,18,0,2*Math.PI);g.fillStyle=m.clColor(e.c);g.fill();g.fillStyle='#111827';g.fillText(e.t,lx+52,ly);lx+=64+g.measureText(e.t).width+70});
+  return cv.toDataURL('image/png');
 }
 
 /* ---------- exports ---------- */
