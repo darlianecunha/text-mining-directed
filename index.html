@@ -324,7 +324,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
               Generate synonyms automatically from the library
             </label>
             <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tx2);cursor:pointer;margin-top:.4rem">
-              <input type="checkbox" id="label-search" checked style="accent-color:var(--ac);width:15px;height:15px"/>
+              <input type="checkbox" id="label-search" style="accent-color:var(--ac);width:15px;height:15px"/>
               Also search the label itself (the text before =)
             </label>
           </div>
@@ -1088,14 +1088,18 @@ function netFit(){if(network)network.fit({animation:{duration:300}})}
 function downloadPNG(){
   if(!network){showMsg('Generate the network first.');return}
   // render at high resolution (about 3000 px wide), then restore the on-screen size
-  const box=document.getElementById('net-box');const w=box.clientWidth,h=box.clientHeight;
+  // the network lives in the "View in the app" tab: show it for a moment if another tab is open,
+  // otherwise its canvas has no size and the image comes out empty
+  const panel=document.getElementById('tab-app');const wasHidden=panel.hidden;if(wasHidden)panel.hidden=false;
+  const box=document.getElementById('net-box');const w=box.clientWidth||1200,h=box.clientHeight||800;
   const W=3000,H=Math.round(W*h/w);
   box.style.visibility='hidden';
   network.setSize(W+'px',H+'px');network.fit({animation:false,maxZoomLevel:20});network.redraw();
   const cv=box.querySelector('canvas');const url=cv?cv.toDataURL('image/png'):null;
   network.setSize('100%','100%');network.fit({animation:false});network.redraw();
   box.style.visibility='visible';
-  if(!url)return;
+  if(wasHidden)panel.hidden=true;
+  if(!url||url.length<100){showMsg('Could not create the network image. Open "View in the app" and try again.');return}
   if(ZIP_COLLECT){ZIP_COLLECT.file('pdfterms-network.png',url.split(',')[1],{base64:true});return}
   const a=document.createElement('a');a.href=url;a.download='pdfterms-network.png';a.click();toast('PNG downloaded');
 }
