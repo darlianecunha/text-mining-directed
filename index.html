@@ -295,12 +295,12 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
           <div class="kw-col">
             <div class="kw-col-h"><span class="kw-col-n">A</span> Your keywords</div>
             <div id="free-input">
-              <p class="kw-col-s">Type one term per line. Just what you want to search for.</p>
+              <p class="kw-col-s">Type one term per line, or several on a line separated by commas. Just what you want to search for.</p>
               <textarea id="kw-input" aria-label="Search terms, one per line" spellcheck="false" autocorrect="off" placeholder="CO2&#10;ballast water&#10;shore power&#10;energy efficiency&#10;ESG&#10;dredging&#10;SDGs"></textarea>
               <div class="cl-warn" id="free-warn"></div>
             </div>
             <div id="cluster-input" style="display:none">
-              <p class="kw-col-s">Name each cluster and type its terms, one per line. Synonyms (=) and wildcards (*) work as usual. Below each list you see the variants that will actually be counted.</p>
+              <p class="kw-col-s">Name each cluster and type its terms, one per line or separated by commas. Synonyms (=) and wildcards (*) work as usual. Below each list you see the variants that will actually be counted.</p>
               <div class="cl-list" id="cl-list"></div>
               <button class="btn-mini" id="cl-add" onclick="addCluster()" style="margin-top:.7rem">+ Add cluster</button>
               <div class="cl-warn" id="cl-warn"></div>
@@ -478,7 +478,7 @@ footer p{font-size:12px;color:var(--tx3);margin-top:.3rem}
       <p class="sec-title">Frequently asked questions</p>
       <div class="faq-list">
         <details class="fi"><summary>Free terms or defined clusters?</summary><p><strong>Free terms</strong> is inductive: the clusters emerge from the co-occurrence data (Louvain modularity in the app; VOSviewer forms its own when you export). <strong>Defined clusters</strong> is deductive: you set up to six clusters from your theory or framework, such as SDGs, ESG pillars or GRI topics, and their names and colours are carried into the VOSviewer file. Running the same terms in both modes shows whether your theoretical groups actually appear in the texts.</p></details>
-        <details class="fi"><summary>How do I write the terms?</summary><p>One term per line. Group synonyms with <code>=</code> and separate variants with <code>;</code>, for example <code>CO2 = carbon dioxide; dióxido de carbono</code>. Use <code>*</code> for endings: <code>emission*</code> matches emission and emissions, but not emitting. Compound terms are searched as whole phrases, hyphens are optional, and case and accents are ignored. Untick “Also search the label itself” when the text before <code>=</code> is only a name.</p></details>
+        <details class="fi"><summary>How do I write the terms?</summary><p>One term per line, or a block of terms separated by commas, for example <code>hydrogen, ammonia, methanol</code>. Group synonyms with <code>=</code> and separate variants with <code>;</code>, for example <code>CO2 = carbon dioxide; dióxido de carbono</code>. Use <code>*</code> for endings: <code>emission*</code> matches emission and emissions, but not emitting. Compound terms are searched as whole phrases, hyphens are optional, and case and accents are ignored. Untick “Also search the label itself” when the text before <code>=</code> is only a name.</p></details>
         <details class="fi"><summary>Document or sentence co-occurrence?</summary><p><strong>Document</strong> (recommended) links two terms once per PDF in which both appear, so a long report that repeats a term cannot dominate the network. <strong>Sentence</strong> counts every sentence in which the two terms appear together; it suits close readings of a few documents.</p></details>
         <details class="fi"><summary>Some terms were not found. What now?</summary><p>The results list every term with zero occurrences. Check spelling, add synonyms or try a wildcard such as <code>govern*</code>. Scanned PDFs contain images, not text, and need OCR first; the file list flags documents with very little text.</p></details>
       </div>
@@ -590,7 +590,7 @@ function renderClusters(){
       <input type="text" maxlength="60" data-i="${i}" aria-label="Name of cluster ${i+1}" class="cl-name" placeholder="Cluster ${i+1} name (e.g. Environmental)" value="${esc(c.name)}"/>
       ${clusters.length>1?`<button class="frm" aria-label="Remove cluster ${i+1}" title="Remove cluster" onclick="removeCluster(${i})">&times;</button>`:''}
     </div>
-    <textarea data-i="${i}" aria-label="Terms of cluster ${i+1}" class="cl-terms" spellcheck="false" autocorrect="off" placeholder="one term per line">${esc(c.terms)}</textarea>
+    <textarea data-i="${i}" aria-label="Terms of cluster ${i+1}" class="cl-terms" spellcheck="false" autocorrect="off" placeholder="one term per line, or several separated by commas">${esc(c.terms)}</textarea>
     <details class="cl-syn" open><summary id="cl-syn-s-${i}">Synonyms</summary><div class="cl-syn-body" id="cl-syn-${i}"></div></details>
   </div>`).join('');
   box.querySelectorAll('.cl-name').forEach(el=>{el.addEventListener('input',()=>{clusters[+el.dataset.i].name=el.value;renderKwPreview()});el.addEventListener('focus',()=>activeCl=+el.dataset.i)});
@@ -684,7 +684,12 @@ function showMsg(t){const a=document.getElementById('msg');a.innerHTML=`<p class
 /* ---------- parsing dos termos ---------- */
 function parseTerms(raw){
   const auto=document.getElementById('auto-expand').checked;
-  const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l && !l.startsWith('//'));
+  // a line without "=" may hold several terms separated by commas or semicolons: "GNL, hidrogênio, metanol"
+  const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l && !l.startsWith('//')).flatMap(l=>{
+    const mm=l.match(/^(\[[^\]]+\]\s*)?(.*)$/);const pre=mm[1]||'',body=mm[2];
+    if(body.indexOf('=')>=0||!/[,;]/.test(body))return [l];
+    return body.split(/[,;]/).map(t=>t.trim()).filter(Boolean).map(t=>pre+t);
+  });
   const groups=[];
   lines.forEach(line=>{
     let category='',rest=line;
@@ -786,7 +791,7 @@ function rmFile(i){const f=files[i];if(f&&!f.done&&!f.err){showMsg('Wait until "
 function clearAll(){files=[];renderFiles();checkGenBtn();netData=null;document.getElementById('results').style.display='none';document.getElementById('msg').innerHTML=''}
 
 async function processFile(file,idx){
-  const rec=files[idx];
+  const rec=typeof idx==='object'?idx:files[idx];  // a record object is safer than an index when files are removed while others wait
   try{
     const ab=await file.arrayBuffer();
     const pdf=await pdfjsLib.getDocument({data:ab}).promise;
@@ -796,10 +801,10 @@ async function processFile(file,idx){
       const ct=await pg.getTextContent();
       let s='';
       for(const it of ct.items){s+=it.str;if(it.hasEOL)s+='\n';else if(it.str&&!/\s$/.test(it.str))s+=' ';}
-      text+=s+'\n';
+      text+=s+'\n';try{pg.cleanup()}catch(_){}
       rec.p=Math.round(p/pdf.numPages*100);renderFiles();
     }
-    rec.text=text;rec.pages=pdf.numPages;rec.words=(text.match(/[\p{L}\p{N}]+/gu)||[]).length;
+    rec.text=text;rec.pages=pdf.numPages;try{pdf.destroy()}catch(_){}rec.words=(text.match(/[\p{L}\p{N}]+/gu)||[]).length;
     rec.low=rec.words<1000||rec.words/rec.pages<50;
     rec.done=true;rec.p=100;
     if(rec.low)showMsg('"'+file.name+'": only '+rec.words.toLocaleString('en-GB')+' words in '+rec.pages+' page(s). Check that it is the right document and not a scanned PDF.');
@@ -811,10 +816,19 @@ function handleFiles(nf){
   if(!pdfs.length){showMsg('Only PDF files are supported.');return}
   pdfs.forEach(file=>{
     if(files.some(f=>f.name===file.name&&f.size===file.size)){showMsg('"'+file.name+'" has already been added.');return}
-    const idx=files.length;
-    files.push({name:file.name,size:file.size,text:'',p:0,done:false,err:false});
-    renderFiles();processFile(file,idx);
+    const rec={name:file.name,size:file.size,text:'',p:0,done:false,err:false};
+    files.push(rec);
+    renderFiles();pdfQueue.push([file,rec]);
   });
+  pumpQueue();
+}
+/* process PDFs a few at a time so that large batches (30+ long reports) do not exhaust browser memory */
+const PDF_CONCURRENCY=3;const pdfQueue=[];let pdfActive=0;
+function pumpQueue(){
+  while(pdfActive<PDF_CONCURRENCY&&pdfQueue.length){
+    const [file,idx]=pdfQueue.shift();pdfActive++;
+    processFile(file,idx).finally(()=>{pdfActive--;pumpQueue()});
+  }
 }
 
 /* ---------- escopo ---------- */
