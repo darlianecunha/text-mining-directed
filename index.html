@@ -677,7 +677,7 @@ function updateLibStatus(){
 
 /* ---------- utilidades ---------- */
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function norm(s){return s.replace(/\u00ad/g,'').replace(/-[ \t]*\n\s*/g,'').replace(/[\u2018\u2019]/g,"'").toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'')}
+function norm(s){return s.replace(/\u00ad/g,'').replace(/(\p{L})[ \t]+-[ \t]*\n\s*(?=\p{Ll})/gu,'$1').replace(/-[ \t]*\n\s*/g,'').replace(/[\u2018\u2019]/g,"'").toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'')}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 function showMsg(t){const a=document.getElementById('msg');a.innerHTML=`<p class="err">${esc(t)}</p>`;setTimeout(()=>a.innerHTML='',5000)}
 
@@ -799,8 +799,20 @@ async function processFile(file,idx){
     for(let p=1;p<=pdf.numPages;p++){
       const pg=await pdf.getPage(p);
       const ct=await pg.getTextContent();
-      let s='';
-      for(const it of ct.items){s+=it.str;if(it.hasEOL)s+='\n';else if(it.str&&!/\s$/.test(it.str))s+=' ';}
+      // join text items by position: a space only where there is a visible gap or a new line,
+      // so glyphs drawn as separate pieces (accented letters, kerned words) are not split apart
+      let s='',prev=null;
+      for(const it of ct.items){
+        const str=it.str||'';const tr=it.transform||[1,0,0,1,0,0];
+        const fs=Math.hypot(tr[0],tr[1])||it.height||10;
+        if(prev&&!prev.eol&&str&&s&&!/\s$/.test(s)&&!/^\s/.test(str)){
+          const sameLine=Math.abs(tr[5]-prev.y)<fs*0.5;
+          const gap=tr[4]-(prev.x+prev.w);
+          if(!sameLine||gap>fs*0.12||gap<-fs*0.6)s+=' ';
+        }
+        s+=str;if(it.hasEOL)s+='\n';
+        if(str||it.hasEOL)prev={x:tr[4],y:tr[5],w:it.width||0,eol:!!it.hasEOL};
+      }
       text+=s+'\n';try{pg.cleanup()}catch(_){}
       rec.p=Math.round(p/pdf.numPages*100);renderFiles();
     }
